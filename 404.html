@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>RIGHUNT — PC & Gaming Prices in Jordan</title>
+<meta name="description" content="Compare live prices on graphics cards, gaming PCs, monitors, keyboards and consoles from stores across Jordan. Free, no account.">
+<meta name="theme-color" content="#08080c">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23090910'/><path d='M26 74V26h30a14 14 0 0 1 0 28h-8l16 20H50L36 54v20z' fill='%23d8ff3f'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<a class="skip" href="#main">Skip to content</a>
+
+<!-- thin status strip -->
+<div class="strip">
+  <div class="wrap strip-in">
+    <span class="strip-live"><i></i> Live prices from Jordanian stores</span>
+    <span class="strip-sep">·</span>
+    <span id="strip-stores">—</span>
+    <span class="strip-grow"></span>
+    <span id="strip-updated"></span>
+  </div>
+</div>
+
+<header class="site-header">
+  <div class="wrap header-in">
+    <a class="brand" href="home" id="brand-link" aria-label="RigHunt home">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 100 100"><path d="M26 74V26h30a14 14 0 0 1 0 28h-8l16 20H50L36 54v20z"/></svg>
+      </span>
+      <span class="brand-text">
+        <b>RIG<em>HUNT</em></b>
+        <small>Jordan price tracker</small>
+      </span>
+    </a>
+
+    <form class="search" role="search" id="search-form">
+      <svg class="search-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="search-input" type="search" placeholder="Search RTX 5070, DDR5 32GB, gaming chair…"
+             autocomplete="off" spellcheck="false" aria-label="Search products">
+      <button type="button" class="search-clear" id="search-clear" aria-label="Clear search" hidden>&times;</button>
+      <div class="suggest" id="suggest" role="listbox" hidden></div>
+    </form>
+
+    <nav class="header-actions">
+      <a class="hbtn hbtn-deal" href="deals">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12z"/></svg>
+        <span>Deals</span>
+      </a>
+      <a class="hbtn" href="saved">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1Z"/></svg>
+        <span>Saved</span>
+        <b class="badge" id="saved-count" hidden>0</b>
+      </a>
+      <button class="hbtn icon-only" id="theme-toggle" aria-label="Switch light or dark theme">
+        <svg viewBox="0 0 24 24" aria-hidden="true" class="ico-moon"><path d="M21 13A9 9 0 0 1 11 3a9 9 0 1 0 10 10Z"/></svg>
+        <svg viewBox="0 0 24 24" aria-hidden="true" class="ico-sun"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19"/></svg>
+      </button>
+    </nav>
+  </div>
+
+  <!-- main category bar -->
+  <nav class="catbar" aria-label="Product categories">
+    <div class="wrap catbar-in" id="catbar"></div>
+  </nav>
+
+  <!-- subcategories of whatever is active -->
+  <nav class="subbar" aria-label="Subcategories">
+    <div class="wrap subbar-in" id="subbar"></div>
+  </nav>
+</header>
+
+<main id="main" class="wrap">
+  <div class="boot">
+    <div class="loader" aria-hidden="true"><i></i><i></i><i></i></div>
+    <p>Loading the latest prices…</p>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap foot-grid">
+    <div>
+      <div class="foot-brand">RIG<em>HUNT</em></div>
+      <p class="foot-main">
+        We compare what gaming and PC hardware actually costs across Jordanian
+        stores. We don't sell anything — every price links straight to the shop
+        that has it.
+      </p>
+      <p class="foot-meta" id="foot-meta"></p>
+    </div>
+    <div>
+      <h3>Shop by</h3>
+      <ul class="foot-links" id="foot-cats"></ul>
+    </div>
+    <div>
+      <h3>Stores we track</h3>
+      <ul class="foot-links" id="foot-stores"></ul>
+    </div>
+  </div>
+  <div class="wrap foot-base">
+    <span>Free to use. No account, no sign-up, no tracking.</span>
+    <span>Prices in Jordanian dinar (JOD). Always confirm on the store's page before buying.</span>
+  </div>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script type="module" src="assets/js/app.js"></script>
+</body>
+</html>

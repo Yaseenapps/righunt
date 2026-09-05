@@ -1,0 +1,68 @@
+name: Refresh prices and deploy
+
+on:
+  schedule:
+    # Every 6 hours. GitHub runs cron in UTC.
+    - cron: '15 */6 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: refresh
+  cancel-in-progress: false
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci --no-audit --no-fund
+
+      - name: Scrape every store
+        run: npm run scrape
+
+      - name: Show what changed
+        run: cat data/status.json
+
+      - name: Commit refreshed data
+        run: |
+          git config user.name "price-bot"
+          git config user.email "price-bot@users.noreply.github.com"
+          git add data
+          if git diff --staged --quiet; then
+            echo "No price changes."
+          else
+            git commit -m "data: refresh prices $(date -u '+%Y-%m-%d %H:%M UTC')"
+            git push
+          fi
+
+      # Only the site itself gets deployed. Uploading the whole checkout would
+      # pack node_modules and the scraper source into every deploy - the
+      # upload action only excludes .git and .github on its own.
+      - name: Assemble the site
+        run: |
+          mkdir -p _site
+          cp -r index.html assets data .nojekyll _site/
+          # GitHub Pages serves 404.html for real paths like /products/gpu,
+          # so it has to be the app shell.
+          cp index.html _site/404.html
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4

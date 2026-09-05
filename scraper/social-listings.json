@@ -1,0 +1,32 @@
+{
+  "_readme": [
+    "Products sold by Instagram and Facebook sellers in Jordan.",
+    "",
+    "Neither platform can be read automatically - both serve a login wall with no",
+    "post content - so these are added by hand. Everything here appears on the site",
+    "like any other product (categories, filters, search, comparison), and its Buy",
+    "button opens the original post in a new tab.",
+    "",
+    "Add entries to the \"listings\" array below. Required fields:",
+    "  platform  \"instagram\" or \"facebook\"",
+    "  postUrl   link to the exact post, e.g. https://www.instagram.com/p/ABC123/",
+    "  title     what the product is, written like a shop would write it,",
+    "            e.g. \"Gigabyte RTX 4060 Gaming OC 8GB Graphics Card\"",
+    "  price     number, in JOD, e.g. 289",
+    "Optional:",
+    "  seller      the account, e.g. \"@amman.gaming\"",
+    "  image       direct image URL, otherwise the card shows a placeholder",
+    "  was         the old price, if it is on offer",
+    "  category    a hint if the title is vague, e.g. \"graphics card\"",
+    "  brand       e.g. \"Gigabyte\"",
+    "  description free text",
+    "  inStock     false if it has sold; defaults to true",
+    "",
+    "Anything missing a valid postUrl, price or title is rejected at build time and",
+    "never reaches the site, so nothing invented can slip in.",
+    "",
+    "The better the title, the better it is categorised and filtered - write the",
+    "brand, model and capacity the way a shop would."
+  ],
+  "listings": []
+}
