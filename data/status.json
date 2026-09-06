@@ -1,12 +1,12 @@
 {
-  "builtAt": "2026-09-06T01:11:28.499Z",
+  "builtAt": "2026-09-06T06:57:53.913Z",
   "stores": [
     {
       "store": "igeek",
       "name": "iGeek Megastore",
       "ok": true,
       "products": 5256,
-      "seconds": 195
+      "seconds": 299
     },
     {
       "store": "gameon",
@@ -20,21 +20,21 @@
       "name": "PC Circle",
       "ok": true,
       "products": 4045,
-      "seconds": 152
+      "seconds": 162
     },
     {
       "store": "compujordan",
       "name": "Compu Jordan",
       "ok": true,
       "products": 3148,
-      "seconds": 210
+      "seconds": 206
     },
     {
       "store": "orientalstore",
       "name": "Oriental Store",
       "ok": true,
       "products": 5463,
-      "seconds": 468
+      "seconds": 472
     },
     {
       "store": "social",
@@ -57,14 +57,14 @@
       "name": "Compu Me",
       "ok": true,
       "products": 13973,
-      "seconds": 911
+      "seconds": 475
     },
     {
       "store": "numberone",
       "name": "Number One Store",
       "ok": true,
       "products": 1952,
-      "seconds": 87
+      "seconds": 85
     },
     {
       "store": "midas",
