@@ -64,6 +64,38 @@
       "rebuiltFromDisk": true,
       "products": 1402,
       "seconds": 0
+    },
+    {
+      "store": "whiteangel",
+      "name": "White Angel",
+      "ok": false,
+      "error": "HTTP 403 - the store is refusing automated requests",
+      "products": 425,
+      "keptPrevious": true,
+      "seconds": 1
+    },
+    {
+      "store": "compume",
+      "name": "Compu Me",
+      "ok": true,
+      "products": 13973,
+      "seconds": 475
+    },
+    {
+      "store": "numberone",
+      "name": "Number One Store",
+      "ok": true,
+      "products": 1952,
+      "seconds": 85
+    },
+    {
+      "store": "midas",
+      "name": "Midas Computer Center",
+      "ok": false,
+      "error": "no products could be read from this store",
+      "products": 681,
+      "keptPrevious": true,
+      "seconds": 2
     }
   ]
 }
