@@ -97,12 +97,17 @@ export const STORES = [
     enabled: true,
   },
   {
+    // REMOVED. Compu Me is a general electronics superstore, not a gaming
+    // shop: its catalogue runs from graphics cards to air fryers, sticky
+    // notes and cleaning sponges, and too much of it leaked into the
+    // categories here. This site is gaming only, so it is switched off.
     id: 'compume',
     name: 'Compu Me',
     base: 'https://www.compume.jo',
     adapter: 'shopify',
     color: '#ec4899',
-    enabled: true,
+    enabled: false,
+    onlyRelevantCollections: true,
   },
   {
     id: 'numberone',

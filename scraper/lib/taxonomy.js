@@ -534,19 +534,34 @@ export function sanitize(sub, title, specs) {
       return keep(!!specs.type || /\bssd\b|\bhdd\b|\bnvme\b|\bhard\s*(disk|drive)\b/i.test(t));
     case 'prebuilt':
       return keep(/\bpc\b|\bdesktop\b|\bsystem\b|\brig\b|\btower\b|\bbuild\b/i.test(t));
+    case 'gaming-laptop':
+      // "ROG Swift PG259QN 24.5in 360Hz" is a monitor: ASUS uses ROG for
+      // both. A refresh rate and a screen size with no processor is a screen.
+      if (/\bswift\b|\bmonitors?\b/i.test(t)
+          || (/\b\d{2,3}\s*hz\b/i.test(t) && !/\b(ryzen|core|ultra|intel|amd|i[3579])\b/i.test(t))) {
+        return 'monitor';
+      }
+      // Without a gaming graphics chip or a gaming model name it is an
+      // ordinary laptop, which this site does not publish.
+      return /\b(rtx|gtx)\b|\b(rog|tuf|nitro|predator|legion|loq|omen|victus|katana|cyborg|alienware|raider|stealth|blade)\b|\bgaming\b/i.test(t)
+        ? sub
+        : 'laptop';
     case 'chair':
+      // A "Gaming Chair Floor Mat" goes under a chair, it is not one.
+      if (/\bfloor\s*mats?\b|\bmats?\b|\bcovers?\b|\bcushions?\b|\bcasters?\b/i.test(t)) return 'other';
       return keep(/\bchairs?\b|\bseat\b/i.test(t));
     case 'desk':
       // Monitor mounting hardware reaches this category through the shop's
       // own path rather than its title. Kept narrow so a real "Sit-Stand
       // Height Adjustable" desk is not caught with it.
-      if (/\bmonitor\s+(stand|arm|mount)\b|\bdesk\s+mount\b/i.test(t)) return 'other';
+      if (/\bmonitor\s+(stand|arm|mount)\b|\bdesk\s+mount\b|\bfoot\s*rests?\b|\brisers?\b|\bfloor\s*mats?\b|\borganisers?\b/i.test(t)) return 'other';
       // A "table clamp" and a "table top football" are not desks.
       return keep(/\bdesks?\b|\b(computer|gaming|office|study)\s+tables?\b/i.test(t) && !/\bdesktop\b/i.test(t));
     case 'case':
       // "Building Block Chassis Fan" says chassis but is a fan.
       if (/\bfans?\b|\bcoolers?\b|\bradiators?\b|\bfilters?\b|\bpanels?\b/i.test(t)) return 'other';
-      if (/\bi?phones?\b|\bgalaxy\b|\bipad\b|\btablet\b|\bmagnetic\b|\bsilicone\b/i.test(t)) return 'other';
+      // A "PC Case Bag" carries a case; it is not one.
+      if (/\bi?phones?\b|\bgalaxy\b|\bipad\b|\btablet\b|\bmagnetic\b|\bsilicone\b|\bbags?\b|\bbackpacks?\b|\bsleeves?\b/i.test(t)) return 'other';
       // Needs to name itself a PC case. A bare "PC" is not enough: a phone
       // case model number like "PC-30" contains it.
       return keep(
@@ -556,7 +571,20 @@ export function sanitize(sub, title, specs) {
         || /\bchassis\b/i.test(t)
         || /\bcasing\b/i.test(t),
       );
+    // These three are reached mostly through a shop's own category path, so
+    // the title has to back it up. Without that, an office superstore's
+    // sharpeners and sticky notes land in Console Accessories and Controllers.
+    case 'console-accessory':
+      if (/\bmonitors?\b|\b\d{2,3}\s*hz\b/i.test(t)) return 'monitor';
+      return keep(/\b(playstation|ps[45]|xbox|nintendo|switch|joy-?con|dualsense|dualshock|steam\s*deck|controller|gamepad|console)\b/i.test(t));
+    case 'controller':
+      return keep(/\b(controller|game\s*pad|gamepad|joy\s*stick|joy-?con|dualsense|dualshock|racing\s+wheel|steering\s+wheel|flight\s+stick|pedals?)\b/i.test(t));
+    case 'microphone':
+      return keep(/\b(microphone|mic|podcast|lavalier|condenser)\b/i.test(t));
+
     case 'console':
+      // A monitor that mentions console compatibility is still a monitor.
+      if (/\bmonitors?\b|\bhz\b|\bcurved\b|\bips\b|\bva panel\b/i.test(t)) return 'monitor';
       // "USB handbrake for PS5" is an accessory, not a console.
       return /\bfor\s+(the\s+)?(ps[45]|xbox|nintendo|switch|playstation)\b/i.test(t)
         ? 'console-accessory'

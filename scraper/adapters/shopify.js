@@ -64,6 +64,19 @@ export async function scrape(store, log) {
   const [products, hints] = [await allProducts(base), await collectionHints(base, log)];
   log(`  ${products.length} products from catalogue`);
 
+  // General electronics shops also sell stationery, cleaning products and
+  // kitchen goods. For those, take only what the shop itself files under a
+  // gaming or PC collection - its own categorisation is far better evidence
+  // than trying to spot a sticky note by its title.
+  const gatedByCollection = store.onlyRelevantCollections === true;
+  if (gatedByCollection) {
+    const before = products.length;
+    const kept = products.filter((p) => hints.has(p.id));
+    log(`  ${kept.length} of ${before} sit in a gaming or PC collection - the rest are skipped`);
+    products.length = 0;
+    products.push(...kept);
+  }
+
   const rows = [];
   for (const p of products) {
     const variants = p.variants || [];

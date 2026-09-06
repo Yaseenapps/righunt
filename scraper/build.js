@@ -43,8 +43,13 @@ async function readJson(file) {
   }
 }
 
-/** Every product currently on disk, so a failed store keeps its listings. */
+/**
+ * Every product currently on disk, so a failed store keeps its listings.
+ * Switched-off shops are dropped here, which is what makes removing a shop
+ * take effect without waiting for a full re-read of every other one.
+ */
 async function loadExisting() {
+  const live = new Set(STORES.filter((s) => s.enabled).map((s) => s.id));
   const out = [];
   const index = await readJson(path.join(DATA, 'index.json'));
   if (!index) return out;
@@ -53,6 +58,7 @@ async function loadExisting() {
       const list = await readJson(path.join(DATA, 'sub', `${s.id}.json`));
       const detail = await readJson(path.join(DATA, 'detail', `${s.id}.json`));
       for (const p of list?.products || []) {
+        if (!live.has(p.store)) continue;
         const d = detail?.[p.id] || {};
         out.push({ ...p, sub: s.id, cat: SUB_TO_CAT[s.id], description: d.description || '', images: d.images || [] });
       }
