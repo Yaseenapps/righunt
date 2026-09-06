@@ -46,7 +46,17 @@ jobs:
             echo "No price changes."
           else
             git commit -m "data: refresh prices $(date -u '+%Y-%m-%d %H:%M UTC')"
-            git push
+            # Someone may have pushed while this run was scraping. Replay our
+            # data commit on top of theirs instead of failing the whole job -
+            # and if the push still cannot go through, say so but carry on to
+            # the deploy, because a stale commit is no reason to leave the
+            # live site un-updated.
+            for attempt in 1 2 3; do
+              git pull --rebase --autostash origin main && git push && exit 0
+              echo "push attempt $attempt did not go through; retrying"
+              sleep 5
+            done
+            echo "::warning::Could not save refreshed prices to the repo. Deploying anyway."
           fi
 
       # Only the site itself gets deployed. Uploading the whole checkout would

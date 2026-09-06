@@ -142,10 +142,10 @@ async function route(parts, qs) {
 function titleFor(parts) {
   const base = 'RIGHUNT — PC & Gaming Prices in Jordan';
   const [head, a] = parts;
-  if (!head) return base;
+  if (!head || head === 'home') return base;
   if (head === 'category') return `${META?.cats.get(a)?.name || 'Browse'} · ${base}`;
   if (head === 'products') return `${META?.subs.get(a)?.name || 'Products'} · ${base}`;
-  const map = { product: 'Product', saved: 'Saved', deals: 'Deals', search: 'Search', home: '' };
+  const map = { product: 'Product', saved: 'Saved', deals: 'Deals', search: 'Search' };
   return `${map[head] || 'Not found'} · ${base}`;
 }
 
