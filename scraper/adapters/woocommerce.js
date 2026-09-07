@@ -18,9 +18,19 @@ export async function scrape(store, log) {
 
   if (!(await robotsAllows(api))) throw new Error('robots.txt disallows the Store API');
 
+  // PC Circle disallows `per_page` - it is in the list of shop parameters it
+  // considers expensive. Reading at the API's own page size takes ten times
+  // as many requests, which is the shop's call to make, not ours.
+  const bulk = await robotsAllows(`${api}?per_page=${PER_PAGE}`);
+  log(bulk
+    ? '  reading 100 products per request'
+    : '  this shop asks crawlers not to use per_page, so pages are read at the API default');
+
   const rows = [];
-  for (let page = 1; page <= 200; page++) {
-    const batch = await fetchJson(`${api}?per_page=${PER_PAGE}&page=${page}&catalog_visibility=catalog`);
+  for (let page = 1; page <= (bulk ? 200 : 1200); page++) {
+    const batch = await fetchJson(
+      `${api}?${bulk ? `per_page=${PER_PAGE}&` : ''}page=${page}&catalog_visibility=catalog`,
+    );
     if (!Array.isArray(batch) || !batch.length) break;
 
     for (const p of batch) {
@@ -64,7 +74,9 @@ export async function scrape(store, log) {
       });
     }
 
-    log(`  page ${page}: ${batch.length} products (running total ${rows.length})`);
+    // At the API's own page size this runs to hundreds of pages, so it
+    // reports progress periodically rather than line by line.
+    if (bulk || page % 25 === 0) log(`  page ${page}: running total ${rows.length}`);
     if (batch.length < PER_PAGE) break;
   }
   return rows;

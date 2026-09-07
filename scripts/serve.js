@@ -45,7 +45,11 @@ createServer(async (req, res) => {
     const wantsFile = /\.[a-z0-9]+$/i.test(new URL(req.url, 'http://localhost').pathname);
     if (!wantsFile) {
       try {
-        const shell = await readFile(join(ROOT, 'index.html'));
+        // 404.html, not index.html: it is the shell that loads its assets
+        // from the site root, which is the only one that works from a deep
+        // path. Serving it here means local development exercises exactly
+        // what visitors to a shared link will get.
+        const shell = await readFile(join(ROOT, '404.html'));
         res.writeHead(200, { 'Content-Type': TYPES['.html'], 'Cache-Control': 'no-cache' });
         return res.end(shell);
       } catch { /* fall through to 404 */ }

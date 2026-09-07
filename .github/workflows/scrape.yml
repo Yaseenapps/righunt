@@ -20,7 +20,9 @@ concurrency:
 jobs:
   scrape:
     runs-on: ubuntu-latest
-    timeout-minutes: 55
+    # City Center publishes no bulk catalogue, so it is read one product page
+    # at a time - about 15 minutes on its own, on top of the other 8 shops.
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
 
@@ -66,9 +68,11 @@ jobs:
         run: |
           mkdir -p _site
           cp -r index.html assets data .nojekyll _site/
-          # GitHub Pages serves 404.html for real paths like /products/gpu,
-          # so it has to be the app shell.
-          cp index.html _site/404.html
+          # GitHub Pages serves 404.html for real paths like /products/gpu.
+          # It is the app shell too, but NOT a copy of index.html: it has to
+          # load its assets from the site root, because it is served from
+          # addresses several levels deep. See the comment inside it.
+          cp 404.html _site/404.html
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

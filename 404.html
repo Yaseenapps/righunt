@@ -10,7 +10,31 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=Inter:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="assets/css/style.css">
+
+<!--
+  This file is what the host serves for any address that is not a real file,
+  which is every page of this site except the front one: /products/gpu,
+  /product/gpu/igeek-abc, /saved, and so on.
+
+  index.html can load its stylesheet and script with plain relative paths
+  because it is only ever served from the site root. This file cannot: served
+  at /products/gpu, "assets/js/app.js" would resolve to
+  /products/assets/js/app.js, which does not exist - so the page would sit on
+  "Loading the latest prices..." for ever. Every shared link and every link
+  the assistant hands out would land there.
+
+  So the two asset tags are written from the site root instead. The root is
+  "/" on a domain of our own, and "/<repo>/" on a github.io project page.
+-->
+<script>
+  (function () {
+    var root = /\.github\.io$/i.test(location.hostname)
+      ? '/' + location.pathname.split('/')[1] + '/'
+      : '/';
+    document.write('<link rel="stylesheet" href="' + root + 'assets/css/style.css">');
+    document.write('<script type="module" src="' + root + 'assets\/js\/app.js"><\/script>');
+  })();
+</script>
 </head>
 <body>
 
@@ -118,6 +142,10 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
-<script type="module" src="assets/js/app.js"></script>
+<noscript>
+  <p style="padding:24px;text-align:center">
+    This page needs JavaScript. <a href="/">Go to the home page</a>.
+  </p>
+</noscript>
 </body>
 </html>

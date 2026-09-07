@@ -1,9 +1,11 @@
-// OpenCart stores (Compu Jordan, City Center, Oriental Store).
+// OpenCart stores (Compu Jordan, Oriental Store, Number One).
+// City Center is also OpenCart but has its own adapter: its robots.txt
+// disallows the paginated listing URLs this one relies on.
 // No public product API, so we read the same catalogue pages a shopper sees:
 // the store's own sitemap gives the category tree, then each category is
 // paged through with ?limit=100.
 import * as cheerio from 'cheerio';
-import { fetchText, robotsAllows } from '../lib/http.js';
+import { fetchText, fetchMany, robotsAllows } from '../lib/http.js';
 import { parsePrice, absUrl, stripHtml } from '../lib/text.js';
 
 const PER_PAGE = 100;
@@ -131,11 +133,28 @@ export async function scrape(store, log) {
   let strikes = 0;
   const LIMIT = 5;
 
+  // `?limit=100` reads a category in one request instead of five, but several
+  // of these shops disallow it - they class big listing pages as expensive,
+  // and say so in robots.txt. Ask once, then page the slow way where that is
+  // what the shop wants. Number One also singles out `?page=1`, so page one
+  // is always requested as the bare category URL.
+  const bulk = await robotsAllows(`${base}/?limit=${PER_PAGE}`);
+  const pageUrl = (p, n) => (bulk
+    ? `${base}${p}?limit=${PER_PAGE}${n > 1 ? `&page=${n}` : ''}`
+    : `${base}${p}${n > 1 ? `?page=${n}` : ''}`);
+  log(bulk
+    ? `  reading 100 products per request`
+    : `  this shop asks crawlers not to use ?limit=, so pages are read at its own size`);
+
   outer:
   for (const [path, label] of categories) {
     let got = 0;
-    for (let page = 1; page <= MAX_PAGES; page++) {
-      const url = `${base}${path}?limit=${PER_PAGE}${page > 1 ? `&page=${page}` : ''}`;
+    // Reading a category at the shop's own page size takes roughly five
+    // times as many requests, so the ceiling has to rise with it or the
+    // biggest categories would be cut off half way.
+    const maxPages = bulk ? MAX_PAGES : MAX_PAGES * 6;
+    for (let page = 1; page <= maxPages; page++) {
+      const url = pageUrl(path, page);
       let html;
       try {
         html = await fetchText(url);
@@ -170,5 +189,67 @@ export async function scrape(store, log) {
 
   if (!out.length) throw new Error('no products could be read from this store');
   log(`  ${out.length} unique products across ${categories.size} categories`);
+
+  await fillInDescriptions(out, log);
   return out;
+}
+
+/**
+ * Some OpenCart themes print no description on the listing card - Number One
+ * publishes a real one on each product page but shows nothing in the grid, so
+ * 1,440 of its products reached us with a title, a price and nothing to read.
+ *
+ * Those product pages are cheap and already allowed, so the ones that came
+ * back blank get a second visit. Nothing is invented here: if the shop has
+ * written no description, the product simply keeps none.
+ */
+async function fillInDescriptions(rows, log) {
+  const blank = rows.filter((r) => !r.description || r.description.trim().length < 25);
+  if (!blank.length) return;
+
+  log(`  ${blank.length} products had no description on the listing page - reading theirs`);
+  const byUrl = new Map(blank.map((r) => [r.url, r]));
+  let filled = 0;
+
+  await fetchMany([...byUrl.keys()], {
+    workers: 4,
+    gap: 250,
+    retries: 1,
+    onProgress: (done, total) => log(`  read ${done} of ${total} product pages for descriptions`),
+    onItem: (html, url) => {
+      const text = descriptionFrom(html);
+      if (!text) return;
+      byUrl.get(url).description = text;
+      filled++;
+    },
+  });
+
+  log(`  filled in ${filled} descriptions`);
+}
+
+/** The product's own description, from whichever place the theme puts it. */
+function descriptionFrom(html) {
+  const $ = cheerio.load(html);
+
+  // The description tab is the real thing when the theme has one.
+  for (const sel of ['#tab-description', '.tab-description', '#description', '.product-description', '[id*="tab-description"]']) {
+    const t = stripHtml($(sel).first().html() || '');
+    if (t && t.trim().length > 25) return t.trim().slice(0, 4000);
+  }
+
+  for (const [, body] of html.matchAll(/<script[^>]+application\/ld\+json[^>]*>([\s\S]*?)<\/script>/gi)) {
+    try {
+      const parsed = JSON.parse(body.trim());
+      for (const n of (Array.isArray(parsed) ? parsed : [parsed])) {
+        if (n?.['@type']?.includes?.('Product') && typeof n.description === 'string' && n.description.trim().length > 25) {
+          return stripHtml(n.description).trim().slice(0, 4000);
+        }
+      }
+    } catch { /* a malformed block is not worth failing over */ }
+  }
+
+  // Last resort. Often just the title repeated, so it has to be longer than
+  // one to be worth keeping.
+  const meta = $('meta[name="description"]').attr('content') || '';
+  return meta.trim().length > 60 ? meta.trim().slice(0, 4000) : '';
 }
