@@ -399,13 +399,24 @@ const PART_SUBS = new Set([
  * enough: a motherboard legitimately names its socket and its memory type,
  * and a graphics card names its own VRAM.
  */
-/** A portable machine rather than a desktop one. */
+/**
+ * A portable machine rather than a desktop one.
+ *
+ * Saying it outright counts on its own. A family name does not: "Swift" is an
+ * Acer laptop AND an XFX graphics card line, so a bare family name has to be
+ * backed by something only a computer has - a processor, or a screen size.
+ * Without that, an "XFX Swift RX 9060 XT" was protected from every rule that
+ * would have filed it as a graphics card.
+ */
 function looksLikeALaptop(title) {
-  return LAPTOP_FAMILY.test(title)
-    || /\b(laptop|notebook|ultrabook)\b/i.test(title)
-    // A screen size is the giveaway: desktops do not have one.
-    || /\b1[2-8](\.\d)?\s*(inch|["”″])/i.test(title)
+  if (/\b(laptop|notebook|ultrabook)\b/i.test(title)) return true;
+
+  const family = LAPTOP_FAMILY.test(title)
     || /\b(nitro|predator|legion|loq|omen|victus|katana|cyborg|raider|vector|stealth|titan|alienware|blade|zephyrus|scar|tuf\s+f?\d{2}|gf\d{2}|gp\d{2}|gl\d{2})\b/i.test(title);
+  const screen = /\b1[2-8](\.\d)?\s*(inch|["”″])/i.test(title);
+  const processor = /\b(ryzen|core\s*i[3579]|core\s*ultra|ultra\s*[579]|celeron|pentium|snapdragon|apple\s*m[1-4]|i[3579][\s-]\d{4,5})\b/i.test(title);
+
+  return (family && (screen || processor)) || (screen && processor);
 }
 
 function countsAsWholeSystem(title) {
@@ -600,6 +611,13 @@ export function sanitize(sub, title, specs) {
   // earbuds and mobile controllers are real things people gaming with.
   if (PC_PART_SUBS.has(sub) && IS_PHONE_OR_TABLET.test(t)) return 'other';
 
+  // Nor does home security or smart-home kit belong in any gaming aisle.
+  // Surveillance cameras were reaching Storage, and a smart plug reached
+  // Controllers because it came with a remote.
+  if (/\b(surveillance\s+camera|security\s+camera|ip\s+camera|cctv|dvr\b|nvr\b|door\s*bell|smart\s+(plug|bulb|lock|light)|baby\s+monitor)\b/i.test(t)) {
+    return 'other';
+  }
+
   // A screen size plus a refresh rate plus a processor is a laptop, whatever
   // component the rest of the title happens to name.
   if (COMPONENT_SUBS.has(sub)
@@ -646,8 +664,18 @@ export function sanitize(sub, title, specs) {
   // across completely different things: "Swift" is an Acer laptop and an XFX
   // graphics card line, and "XFX Swift RX 9060 XT Triple Fan Gaming Edition"
   // was being sold on the site as a gaming laptop.
+  //
+  // A family name on its own is not enough either. Monitors borrow them too -
+  // Twisted Minds sells a "Prestige X Series 27in QHD 280Hz", and MSI sells
+  // Prestige laptops - so a machine has to name a processor or call itself a
+  // laptop as well. Without that, the monitor was moved into Gaming Laptops
+  // and back again on every refresh.
   const namesItself = /\b(graphics?\s+cards?|video\s+cards?|motherboards?|power\s+supply|memory\s+module)\b/i.test(t);
-  if (PART_SUBS.has(sub) && LAPTOP_FAMILY.test(t) && !namesItself) {
+  // A processor MODEL, not a chip maker's name: "XFX Swift AMD Radeon RX
+  // 9060 XT" says AMD, and counting that as evidence of a computer sent every
+  // one of those cards into Gaming Laptops.
+  const hasMachineGuts = /\b(ryzen|core\s*i[3579]|core\s*ultra|ultra\s*[579]|laptop|notebook|celeron|pentium|snapdragon|apple\s*m[1-4]|i[3579][\s-]\d{4,5})\b/i.test(t);
+  if (PART_SUBS.has(sub) && LAPTOP_FAMILY.test(t) && hasMachineGuts && !namesItself) {
     return /\b(rtx|gtx)\b|\brog\b|\btuf\b|\bnitro\b|\blegion\b|\bloq\b|\bomen\b|\bvictus\b|\bkatana\b|\bcyborg\b|\bpredator\b|\bgaming\b/i.test(t)
       ? 'gaming-laptop'
       : 'laptop';
@@ -673,6 +701,8 @@ export function sanitize(sub, title, specs) {
       // A bare "GPU" is not enough - it is usually a compatibility note.
       return keep(!!specs.chipset || /\bgraphics?\s+card\b|\bvideo\s+card\b|\bvga\s+card\b/i.test(t));
     case 'psu':
+      // "PoE Injector - 15.4W Power Supply" powers a network camera, not a PC.
+      if (/\bpoe\b|\binjectors?\b|\bups\b|\bpower\s*banks?\b|\bsurge\b|\badapt[oe]rs?\b/i.test(t)) return 'other';
       return keep(!!specs.wattage || /\bpower\s*supply\b|\bpsu\b|\b80\s*plus\b/i.test(t));
     case 'cpu':
       // A CPU cooler's spec sheet lists the processor sockets it fits, which
@@ -688,6 +718,9 @@ export function sanitize(sub, title, specs) {
       // A handheld console has a screen and a refresh rate; it is not a
       // monitor. Neither is a phone or a tablet.
       if (/\bhandhelds?\b|\bretro\s+(gaming\s+)?console\b|\bgame\s*boy\b|\bportable\s+console\b/i.test(t)) return 'other';
+      // Nor is a television. Forty-nine 32-inch FHD TVs were listed as gaming
+      // monitors; a set that never says "monitor" is not one.
+      if (/\b(smart\s*)?tvs?\b|\btelevisions?\b/i.test(t) && !/\bmonitors?\b/i.test(t)) return 'other';
       // A "4K 60Hz" HDMI adapter is not a monitor - it needs a screen size
       // or to actually call itself one.
       return keep(/\bmonitor\b/i.test(t) || (!!specs.size && !/\badapter\b|\bcable\b|\bconverter\b|\bmount\b|\bstand\b|\bsplitter\b/i.test(t)));
@@ -704,16 +737,52 @@ export function sanitize(sub, title, specs) {
     case 'prebuilt':
       // "Intel Core i7-12700KF Gaming Desktop Processor" is a processor that
       // says "desktop", and a stream keypad is not a computer.
-      if (/\bprocessors?\b|\bcpu\b/i.test(t) && !/\b(gaming\s+pc|desktop\s+(pc|computer)|tower\s+pc|pre[\s-]?built|barebone|mini\s*pc|all[\s-]in[\s-]one)\b/i.test(t)) return 'cpu';
+      //
+      // A title naming a graphics card as well is a build sheet, not a loose
+      // processor: "N1 PC GAMING BUILD N242 - RTX 3060 12G GPU INTEL I5
+      // 12400F" was moved to Processors, sent back next refresh, and bounced
+      // between the two for ever.
+      if (/\bprocessors?\b|\bcpu\b/i.test(t)
+          // Shops write "GeForce RTX™ 4070", so the trademark symbol has to
+          // be tolerated or the veto never fires.
+          && !/\b(rtx|gtx)[\s™®]*\d{3,4}\b|\brx[\s™®]*[5-9]\d{3}\b|\bgpu\b|\bbuild\b|\bgeforce\b|\bradeon\b/i.test(t)
+          && !/\b(gaming\s+pc|desktop\s+(pc|computer)|tower\s+pc|pre[\s-]?built|barebone|mini\s*pc|all[\s-]in[\s-]one)\b/i.test(t)) {
+        return 'cpu';
+      }
       if (/\bkeypads?\b|\bstream\s+(controller|deck)\b/i.test(t)) return 'other';
       return keep(/\bpc\b|\bdesktop\b|\bsystem\b|\brig\b|\btower\b|\bbuild\b/i.test(t));
     case 'gaming-laptop':
+      // A product that describes itself as a component is that component,
+      // whatever laptop family its brand name collides with. The XFX Swift
+      // RX 9060 XT never says "graphics card" - it says GDDR6, boost clock
+      // and stream processors, which no laptop listing does - and it was on
+      // sale here as a gaming laptop.
+      // ...but not when it is plainly a laptop describing what is inside it.
+      // "ThinkPad P16v Mobile Workstation ... RTX 1000 Ada 6GB Graphic Card
+      // & HUGE Battery" says "Graphic Card" about its own chip, and was sent
+      // to Graphics Cards and back on every refresh.
+      if (!looksLikeALaptop(t)) {
+        if (/\b(graphics?|video)\s+cards?\b/i.test(t)) return 'gpu';
+        if (/\bmotherboards?\b/i.test(t)) return 'motherboard';
+      }
+      // Vetoed by the same laptop test used everywhere else. Checking only
+      // for the words "laptop" and "notebook" was not enough: a ThinkPad P16v
+      // Mobile Workstation lists the GDDR6 on its own graphics chip, so it
+      // was moved to Graphics Cards, moved back next refresh, and bounced
+      // between the two for ever.
+      if (/\b(gddr\d|boost\s+clock|stream\s+processors?|memory\s+clock|bus\s+width|\d{3}-bit\b)/i.test(t)
+          && !looksLikeALaptop(t)) {
+        return 'gpu';
+      }
       // "ROG Swift PG259QN 24.5in 360Hz" is a monitor: ASUS uses ROG for both
       // its screens and its laptops. It has to be ROG Swift, though - a bare
       // "Swift" sent every Acer Swift laptop into Monitors.
       // A refresh rate and a screen size with no processor is also a screen.
-      if (/\brog\s+swift\b|\bmonitors?\b/i.test(t)
-          || (/\b\d{2,3}\s*hz\b/i.test(t) && !/\b(ryzen|core|ultra|intel|amd|i[3579])\b/i.test(t))) {
+      // Again, not for something that is plainly a laptop: a "Zenbook Pro 14
+      // Duo ... Dual Monitor" is a two-screen laptop, not a screen.
+      if (!looksLikeALaptop(t)
+          && (/\brog\s+swift\b|\bmonitors?\b/i.test(t)
+            || (/\b\d{2,3}\s*hz\b/i.test(t) && !/\b(ryzen|core|ultra|intel|amd|i[3579])\b/i.test(t)))) {
         return 'monitor';
       }
       // Without a gaming graphics chip or a gaming model name it is an
@@ -726,6 +795,9 @@ export function sanitize(sub, title, specs) {
       if (/\bfloor\s*mats?\b|\bmats?\b|\bcovers?\b|\bcushions?\b|\bcasters?\b/i.test(t)) return 'other';
       return keep(/\bchairs?\b|\bseat\b/i.test(t));
     case 'desk':
+      // A desk mat covers a desk; it is not one. SteelSeries sells them with
+      // "TO COVER DESK" in the name.
+      if (/\bdesk\s*(mats?|pads?)\b|\bmouse\s*pads?\b|\bcover\s+desk\b/i.test(t)) return 'mousepad';
       // Monitor mounting hardware reaches this category through the shop's
       // own path rather than its title. Kept narrow so a real "Sit-Stand
       // Height Adjustable" desk is not caught with it.
@@ -737,6 +809,12 @@ export function sanitize(sub, title, specs) {
       // those words are only evidence against when nothing in the title says
       // "case" outright. Checked first, or a Lancool 216RX advertising its
       // mesh front panel stops being a case.
+      // "...For Computer Case & Liquid Radiator" is a fan sold FOR a case.
+      // That phrasing made the case test pass and kept every one of them here.
+      if (/\bfor\s+(a\s+)?(pc|computer|gaming|desktop)?\s*(case|casing|chassis)\b/i.test(t)) return 'other';
+      // "Kingston DataTraveler 128GB USB Flash Drive - Slim Metal Casing" is
+      // a flash drive describing its shell.
+      if (/\b(flash\s*drives?|usb\s*(stick|drive)|memory\s*cards?|micro\s*sd|datatraveler)\b/i.test(t)) return 'external-storage';
       const namesACase = /\b(pc|computer|gaming|desktop|mid[\s-]?tower|full[\s-]?tower|mini[\s-]?tower|atx|itx)\s*(case|casing|chassis)\b/i.test(t)
         || /\b(case|casing|chassis)\b[^.]{0,40}\b(mid|full|mini)[\s-]?tower\b/i.test(t)
         || /\b(mid|full|mini)[\s-]?tower\b[^.]{0,40}\b(case|casing|chassis)\b/i.test(t);
@@ -781,16 +859,35 @@ export function sanitize(sub, title, specs) {
       // Leads named after what they plug into: "REMAX IPh to 3.5mm 1.2M".
       if (/\bto\s*3\.5\s*mm\b|\b3\.5\s*mm\s*to\b|\baux\b|\bjacks?\b/i.test(t)) return 'other';
       if (/\bkaraoke\b/i.test(t)) return 'other';
+      // "Smart Monitor w/ Speakers" is a monitor that has speakers.
+      if (/\bmonitors?\b/i.test(t)) return 'monitor';
+      // Living-room audio, not desk audio.
+      if (/\bhome\s*theat(re|er)\b|\bsound\s*bar\s+for\s+tv\b|\btv\s+speakers?\b/i.test(t)) return 'other';
       return keep(/\b(speakers?|sound\s*bars?|soundbars?|subwoofers?)\b/i.test(t));
     case 'webcam':
       return keep(/\b(web\s*cams?|webcams?|capture\s+cards?|stream\s*decks?)\b/i.test(t));
+    // Cases, protectors and card holders are things you keep games in, not
+    // games. Video Games should be games.
+    case 'video-game':
+      // Only the things games are kept IN are excluded. Requiring the word
+      // "game" in the title emptied the category, because almost no game is
+      // named that way - "Elden Ring - PS5" says nothing about being a game.
+      if (/\b(cases?|protectors?|holders?|slots?|covers?|skins?|pouch(es)?|wallets?|stands?|card\s+box)\b/i.test(t)) return 'other';
+      if (/\bthumb\s*sticks?\b|\b\w*grips?\b|\bkontrolfreek\b/i.test(t)) return 'other';
+      // A Mario figure is a toy, not a game.
+      if (/\bfigures?\b|\bfigurines?\b|\bamiibo\b|\bstatues?\b|\bplush\b|\bkeychains?\b/i.test(t)) return 'other';
+      return sub;
+    // Card readers and the pouches a drive travels in are not storage.
+    case 'external-storage':
+      if (/\b(readers?|cases?|protection|pouch(es)?|sleeves?|adapt[oe]rs?|hubs?|docks?)\b/i.test(t)) return 'other';
+      return keep(/\b(ssd|hdd|drives?|flash|memory\s*cards?|micro\s*sd|sd\s*cards?|storage|usb\s*(stick|drive))\b/i.test(t));
     case 'console-accessory':
       if (/\bmonitors?\b|\b\d{2,3}\s*hz\b/i.test(t)) return 'monitor';
       return keep(/\b(playstation|ps[45]|xbox|nintendo|switch|joy-?con|dualsense|dualshock|steam\s*deck|controller|gamepad|console)\b/i.test(t));
     case 'controller':
       // The grips, charging kits and thumbstick caps sold for a controller
       // are not controllers.
-      if (/\b(grips?|charge\s+(and|&)\s+play|charging\s+(kit|dock|station)|freek|thumb\s*sticks?|skins?|shells?|battery\s+packs?)\b/i.test(t)) return 'other';
+      if (/\b\w*grips?\b|\bcharge\s+(and|&)\s+play\b|\bcharging\s+(kit|dock|station)\b|\bfreek\b|\bthumb\s*sticks?\b|\bskins?\b|\bshells?\b|\bbattery\s+packs?\b|\bfire\s*stick\b|\btriggers?\b/i.test(t)) return 'other';
       return keep(/\b(controller|game\s*pad|gamepad|joy\s*stick|joy-?con|dualsense|dualshock|racing\s+wheel|steering\s+wheel|flight\s+stick|pedals?)\b/i.test(t));
     case 'microphone':
       // The things a microphone sits on or in front of are not microphones.

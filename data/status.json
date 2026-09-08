@@ -1,12 +1,12 @@
 {
-  "builtAt": "2026-09-08T15:10:14.618Z",
+  "builtAt": "2026-09-08T16:31:59.602Z",
   "stores": [
     {
       "store": "compujordan",
       "name": "Compu Jordan",
       "ok": true,
       "cleanedFromDisk": true,
-      "products": 1546,
+      "products": 1506,
       "seconds": 0
     },
     {
@@ -14,7 +14,7 @@
       "name": "Oriental Store",
       "ok": true,
       "cleanedFromDisk": true,
-      "products": 3517,
+      "products": 3494,
       "seconds": 0
     },
     {
@@ -22,7 +22,7 @@
       "name": "City Center Computers",
       "ok": true,
       "cleanedFromDisk": true,
-      "products": 4088,
+      "products": 4027,
       "seconds": 0
     },
     {
@@ -30,7 +30,7 @@
       "name": "iGeek Megastore",
       "ok": true,
       "cleanedFromDisk": true,
-      "products": 2909,
+      "products": 2900,
       "seconds": 0
     },
     {
@@ -38,7 +38,7 @@
       "name": "Number One Store",
       "ok": true,
       "cleanedFromDisk": true,
-      "products": 1338,
+      "products": 1313,
       "seconds": 0
     },
     {
@@ -54,7 +54,7 @@
       "name": "PC Circle",
       "ok": true,
       "cleanedFromDisk": true,
-      "products": 1332,
+      "products": 1297,
       "seconds": 0
     },
     {
@@ -62,7 +62,7 @@
       "name": "Midas Computer Center",
       "ok": true,
       "cleanedFromDisk": true,
-      "products": 646,
+      "products": 642,
       "seconds": 0
     },
     {
@@ -70,7 +70,7 @@
       "name": "GameOn JO",
       "ok": true,
       "cleanedFromDisk": true,
-      "products": 1591,
+      "products": 1585,
       "seconds": 0
     }
   ]
