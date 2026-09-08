@@ -138,9 +138,9 @@ ok(gpuRank(ladder[ladder.length - 1].gpu) > gpuRank(ladder[0].gpu) + 3,
 function gpuRank(p) {
   const c = String(p?.specs?.chipset || '').toUpperCase();
   const order = ['GT 710', 'GT 1030', '1650', '1660', '3050', '5050', '3060', '4060', '5060',
-    'RX 7600', '3060 TI', '4060 TI', '5060 TI', '3070', 'RX 7700', '4070', '5070',
-    'RX 7800', 'RX 9070', '3080', '4070 TI', 'RX 9070 XT', '5070 TI', '3090', 'RX 7900',
-    '4080', '5080', '4090', '5090'];
+    'RX 6600', 'RX 7600', '3060 TI', 'RX 9060 XT', '4060 TI', '5060 TI', '3070', 'RX 7700',
+    '4070', '5070', 'RX 7800', 'RX 9070', '3080', '4070 TI', 'RX 9070 XT', '5070 TI',
+    '3090', 'RX 7900', '4080', '5080', '4090', '5090'];
   let best = -1;
   order.forEach((m, i) => { if (c.includes(m)) best = Math.max(best, i); });
   return best;

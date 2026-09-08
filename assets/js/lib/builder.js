@@ -271,10 +271,14 @@ function rank(list, ceiling, sub = null) {
 
   function score(p) {
     const able = sub ? capability(sub, p) : 50;
-    // Spend the budget rather than hoard it, but never reward overspending.
+    // Using the budget counts for something - a part that costs more usually
+    // is more - but only a little. It used to be worth 18 points against a
+    // capability difference of about 7, so a dearer, slower graphics card
+    // could win, and a 1,500 JOD build came back with a worse card than a
+    // 1,200 JOD one. What the part actually is has to dominate.
     const use = Math.min(p.price / ceiling, 1);
-    return able * 1.1
-      + use * 18
+    return able * 1.6
+      + use * 7
       + Math.min(p.off, 40) * 0.5
       + (p.brand ? 6 : 0)
       + Math.min(Object.keys(p.specs || {}).length, 6) * 2
@@ -315,9 +319,18 @@ export function pick(products, sub, { budget = Infinity, constraints = {}, limit
 /* ----------------------------------------------------------------- builds */
 
 // Roughly how a balanced gaming machine splits, before compatibility nudges it.
+/**
+ * How the money is divided.
+ *
+ * Weighted towards the graphics card, because that is what decides frame rate
+ * in games and it is what someone buying a gaming PC is really buying. At 34%
+ * a 1,700 JOD budget capped the card at 578, so the RTX 5070s in the
+ * catalogue from 649 were never even considered and the build came back with
+ * a 3070 at 449 - a quarter of the machine. 42% reaches them.
+ */
 const SPLIT = [
-  ['gpu', 0.34], ['cpu', 0.17], ['motherboard', 0.11], ['ram', 0.09],
-  ['storage', 0.09], ['psu', 0.08], ['case', 0.07], ['cooling', 0.05],
+  ['gpu', 0.42], ['cpu', 0.15], ['motherboard', 0.09], ['ram', 0.10],
+  ['storage', 0.08], ['psu', 0.07], ['case', 0.05], ['cooling', 0.04],
 ];
 
 const PART_LABEL = {
@@ -439,7 +452,11 @@ export function buildPC(products, budget, { withMonitor = false } = {}) {
   chosen.ram = rank(enough.length ? enough : ramPool, forParts * 0.11, 'ram')[0]
     || cheapestOf('ram', ramFits) || cheapestOf('ram');
 
-  chosen.gpu = rank(products.filter((p) => p.sub === 'gpu'), forParts * 0.34, 'gpu')[0] || cheapestOf('gpu');
+  // Read from SPLIT rather than repeating the number, so the share is stated
+  // in exactly one place.
+  const shareOf = (sub) => SPLIT.find(([s]) => s === sub)?.[1] || 0.1;
+  chosen.gpu = rank(products.filter((p) => p.sub === 'gpu'), forParts * shareOf('gpu'), 'gpu')[0]
+    || cheapestOf('gpu');
 
   // The supply is sized for the card that was actually chosen.
   const need = (chosen.gpu ? gpuWatts(chosen.gpu.specs) : 0) + 150;
@@ -495,6 +512,11 @@ export function buildPC(products, budget, { withMonitor = false } = {}) {
    * most capability per dinar - until nothing worthwhile fits.
    * ------------------------------------------------------------------ */
   const UPGRADE_ORDER = ['gpu', 'cpu', 'ram', 'monitor', 'storage', 'psu', 'cooling', 'case'];
+  // How much a point of improvement is worth in each part, for a machine
+  // bought to play games on.
+  const UPGRADE_WEIGHT = {
+    gpu: 3, cpu: 1.6, ram: 1.2, monitor: 1, storage: 0.8, psu: 0.5, cooling: 0.4, case: 0.3,
+  };
   for (let guard = 0; guard < 24; guard++) {
     const spent = Object.values(chosen).reduce((s, p) => s + (p?.price || 0), 0);
     const spare = budget - spent;
@@ -514,8 +536,11 @@ export function buildPC(products, budget, { withMonitor = false } = {}) {
         if (extra <= 0 || extra > spare) continue;
         const gain = capability(sub, p) - now;
         if (gain <= 0) continue;
-        // Per-dinar, so a small sensible step beats a huge indulgent one.
-        const worth = gain / extra;
+        // Per-dinar, so a small sensible step beats a huge indulgent one -
+        // but weighted, because measuring purely per-dinar always bought the
+        // cheap upgrade. A better screen would win over a better card every
+        // time, which is not how anyone spends money on a gaming PC.
+        const worth = (gain * UPGRADE_WEIGHT[sub] || gain) / extra;
         if (!best || worth > best.worth) best = { sub, product: p, worth };
       }
     }
