@@ -236,6 +236,21 @@ function capability(sub, p) {
         : /bronze/i.test(s.efficiency || '') ? 10 : 0;
       return Math.min(100, eff * 2 + (/full/i.test(s.modular || '') ? 20 : 0) + 20);
     }
+    case 'monitor': {
+      // Without this every monitor scored the same, so the only thing telling
+      // them apart was which price sat closest to the allowance - and the
+      // same screen came back for 1,200 JOD and 1,500 JOD builds.
+      const hz = Number(s.refresh) || 60;
+      const speed = hz >= 240 ? 34 : hz >= 165 ? 28 : hz >= 144 ? 22 : hz >= 100 ? 12 : 0;
+      const res = /4K/i.test(s.resolution || '') ? 30
+        : /UWQHD/i.test(s.resolution || '') ? 26
+        : /QHD|1440/i.test(s.resolution || '') ? 20
+        : /FHD|1080/i.test(s.resolution || '') ? 8 : 4;
+      const size = Number(s.size) || 0;
+      const inches = size >= 34 ? 16 : size >= 32 ? 13 : size >= 27 ? 10 : size >= 24 ? 6 : 2;
+      const panel = /OLED/i.test(s.panel || '') ? 14 : /IPS/i.test(s.panel || '') ? 8 : /VA/i.test(s.panel || '') ? 5 : 0;
+      return Math.min(100, speed + res + inches + panel);
+    }
     default: return 50;   // cases, cooling: taste, not performance
   }
 }
@@ -465,6 +480,59 @@ export function buildPC(products, budget, { withMonitor = false } = {}) {
       if (target) { chosen[sub] = target; swapped = true; break; }
     }
     if (!swapped) break;
+  }
+
+  /* ------------------------------------------------------------------
+   * Spend what is left.
+   *
+   * Every part is picked against a fixed share of the budget, and there was a
+   * trim loop for going over but nothing for coming in under. So when the
+   * graphics allowance stopped just short of the next card up, the money
+   * simply went unspent: a 2,200 JOD build came back identical to a 1,700 one
+   * with 218 JOD left over, which is not the build someone asked for.
+   *
+   * Repeatedly buy the single best upgrade available - the one gaining the
+   * most capability per dinar - until nothing worthwhile fits.
+   * ------------------------------------------------------------------ */
+  const UPGRADE_ORDER = ['gpu', 'cpu', 'ram', 'monitor', 'storage', 'psu', 'cooling', 'case'];
+  for (let guard = 0; guard < 24; guard++) {
+    const spent = Object.values(chosen).reduce((s, p) => s + (p?.price || 0), 0);
+    const spare = budget - spent;
+    // Chasing the last few dinars just churns the build for no real gain.
+    if (spare < Math.max(25, budget * 0.02)) break;
+
+    let best = null;
+    for (const sub of UPGRADE_ORDER) {
+      const current = chosen[sub];
+      if (!current) continue;
+      const fits = constraintFor[sub] || (() => true);
+      const now = capability(sub, current);
+
+      for (const p of products) {
+        if (p.sub !== sub || !fits(p)) continue;
+        const extra = p.price - current.price;
+        if (extra <= 0 || extra > spare) continue;
+        const gain = capability(sub, p) - now;
+        if (gain <= 0) continue;
+        // Per-dinar, so a small sensible step beats a huge indulgent one.
+        const worth = gain / extra;
+        if (!best || worth > best.worth) best = { sub, product: p, worth };
+      }
+    }
+
+    if (!best) break;
+    chosen[best.sub] = best.product;
+
+    // A bigger card may now need a bigger supply.
+    if (best.sub === 'gpu') {
+      const needed = gpuWatts(best.product.specs) + 150;
+      if ((chosen.psu?.specs?.wattage || 0) < needed) {
+        const stronger = products
+          .filter((p) => p.sub === 'psu' && (p.specs?.wattage || 0) >= needed)
+          .sort((a, b) => a.price - b.price)[0];
+        if (stronger) chosen.psu = stronger;
+      }
+    }
   }
 
   const parts = [...SPLIT.map(([sub]) => sub), 'monitor']

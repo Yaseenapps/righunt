@@ -78,6 +78,74 @@ for (const budget of [1200, 1700, 2000]) {
   ok(!b.problems?.length, `${budget} JOD: parts fit together${b.problems?.length ? ` (${b.problems.join('; ')})` : ''}`);
 }
 
+/* --------------------------------------------------------------------------
+ * A bigger budget has to buy a better machine.
+ *
+ * Reported from the site: the same monitor came back for every budget. It did,
+ * and so did the same graphics card - each part was picked against a fixed
+ * share of the budget, and when that share stopped just short of the next
+ * component up, the money went unspent instead of buying anything.
+ * ----------------------------------------------------------------------- */
+console.log('\n--- the build scales with the budget ---');
+
+const ladder = [900, 1200, 1500, 1700, 2200, 2600, 3000].map((budget) => {
+  const b = buildPC(products, budget, { withMonitor: true });
+  const of = (sub) => b.parts.find((x) => x.sub === sub)?.product;
+  return { budget, build: b, gpu: of('gpu'), monitor: of('monitor'), spare: budget - b.total };
+});
+
+for (const r of ladder) {
+  console.log(`  ${String(r.budget).padStart(5)}  spent ${String(Math.round(r.build.total)).padStart(5)}`
+    + `  left ${String(Math.round(r.spare)).padStart(4)}`
+    + `  ${String(r.gpu?.specs?.chipset || '?').padEnd(14)}`
+    + `  ${(r.monitor?.title || 'none').slice(0, 38)}`);
+}
+
+for (const r of ladder) {
+  ok(r.spare <= Math.max(60, r.budget * 0.05),
+    `${r.budget} JOD: leaves no more than 5% unspent (${Math.round(r.spare)})`);
+  ok(r.monitor, `${r.budget} JOD: a monitor was asked for and returned`);
+}
+
+// Two budgets 500 apart must not produce the same machine.
+for (let i = 0; i < ladder.length; i++) {
+  for (let j = i + 1; j < ladder.length; j++) {
+    if (ladder[j].budget - ladder[i].budget < 500) continue;
+    const same = ladder[i].build.parts.map((x) => x.product.id).sort().join()
+      === ladder[j].build.parts.map((x) => x.product.id).sort().join();
+    ok(!same, `${ladder[i].budget} and ${ladder[j].budget} give different builds`);
+  }
+}
+
+// Spending more must never buy a meaningfully slower card. A one-step sideways
+// move is allowed: an RX 9070 XT and an RTX 4070 Ti are within a few percent
+// of each other, and swapping between them to afford a far better monitor is a
+// good trade, not a regression. A real fault would be several tiers down.
+for (let i = 1; i < ladder.length; i++) {
+  const before = gpuRank(ladder[i - 1].gpu);
+  const after = gpuRank(ladder[i].gpu);
+  ok(after >= before - 1,
+    `${ladder[i].budget} JOD: graphics no worse than at ${ladder[i - 1].budget} `
+    + `(${ladder[i - 1].gpu?.specs?.chipset} -> ${ladder[i].gpu?.specs?.chipset})`);
+}
+
+// Over the whole ladder the direction must be unmistakable.
+ok(gpuRank(ladder[ladder.length - 1].gpu) > gpuRank(ladder[0].gpu) + 3,
+  `3,000 JOD buys a far better card than 900 does `
+  + `(${ladder[0].gpu?.specs?.chipset} -> ${ladder[ladder.length - 1].gpu?.specs?.chipset})`);
+
+// Rough ordering, enough to catch a real regression.
+function gpuRank(p) {
+  const c = String(p?.specs?.chipset || '').toUpperCase();
+  const order = ['GT 710', 'GT 1030', '1650', '1660', '3050', '5050', '3060', '4060', '5060',
+    'RX 7600', '3060 TI', '4060 TI', '5060 TI', '3070', 'RX 7700', '4070', '5070',
+    'RX 7800', 'RX 9070', '3080', '4070 TI', 'RX 9070 XT', '5070 TI', '3090', 'RX 7900',
+    '4080', '5080', '4090', '5090'];
+  let best = -1;
+  order.forEach((m, i) => { if (c.includes(m)) best = Math.max(best, i); });
+  return best;
+}
+
 console.log('\n--- asking for a monitor gets a monitor ---');
 const q = parseQuestion('build me a pc for 1700jds with the monitor');
 ok(q.withMonitor === true, 'the question is read as wanting a screen');
