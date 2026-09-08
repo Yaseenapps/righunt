@@ -26,7 +26,7 @@ import { mkdir, readFile, writeFile, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { fetchText, fetchMany, robotsAllows } from '../lib/http.js';
+import { fetchText, fetchMany, robotsAllows, Blocked } from '../lib/http.js';
 import { stripHtml } from '../lib/text.js';
 
 const SITEMAP = '/sitemap.xml';
@@ -100,9 +100,22 @@ const SHELF_FINGERPRINTS = [
  */
 const MACHINE_SPECS = ['processor brand', 'processor generation', 'processor model'];
 
+/**
+ * Titles that settle the matter regardless of the spec table.
+ *
+ * A CPU cooler lists "Processor Socket" and "Processor Family" - the sockets
+ * it fits - which is the same fingerprint a processor has. Without this, every
+ * DeepCool fan in the shop was published as a processor.
+ */
+const TITLE_OVERRIDES = /\b(fans?|coolers?|cooling|heat\s*sinks?|radiators?|water\s*block|thermal\s+(paste|compound))\b/i;
+
 /** Read the shop's spec table: `{ certainSub }`, `{ storePath }`, or neither. */
 function fromSpecs(specNames, title) {
   const have = new Set(specNames.map((n) => n.replace(/\s+/g, ' ').trim().toLowerCase()));
+
+  // The spec table is strong evidence, not a trump card. When the product
+  // names itself as something else, let the normal rules decide.
+  if (TITLE_OVERRIDES.test(title)) return {};
 
   // A whole machine and a loose processor both describe a CPU, so the spec
   // table alone cannot separate them - the title has to say which.
@@ -267,9 +280,18 @@ export async function scrape(store, log) {
   let noData = 0; let certain = 0; let shelved = 0;
   let sinceSave = 0;
 
-  const { failed, missing } = await fetchMany(todo, {
-    workers: 4,
-    gap: 200,
+  let blocked = false;
+  let failed = 0; let missing = 0;
+
+  // A shop that starts refusing us has said stop, and we stop. But the pages
+  // it already answered were answered willingly, and throwing eight thousand
+  // of them away only guarantees we come back and ask for all of them again -
+  // which is the opposite of what it wanted. So the refusal ends the crawl
+  // and keeps the work.
+  try {
+    ({ failed, missing } = await fetchMany(todo, {
+    workers: 3,
+    gap: 350,
     retries: 2,
     onProgress: async (done, total) => {
       log(`  read ${done.toLocaleString()} of ${total.toLocaleString()} product pages`);
@@ -322,11 +344,26 @@ export async function scrape(store, log) {
         publishedAt: null,
       });
     },
-  });
+    }));
+  } catch (err) {
+    if (!err.blocked) throw err;
+    blocked = true;
+    log(`  !! the shop stopped answering (${err.message}). Keeping the ${rows.length.toLocaleString()} products already read.`);
+  }
 
-  // Read all the way through, so the checkpoint has done its job. Clearing
-  // it means the next run reads fresh prices rather than replaying these.
-  await rm(PROGRESS, { force: true }).catch(() => {});
+  await saveProgress(rows);
+
+  if (blocked) {
+    // Not enough to stand as this shop's catalogue - better to keep the last
+    // good one than publish a fragment of it.
+    if (rows.length < candidates.length * 0.5) {
+      throw new Blocked(`only read ${rows.length} of ${candidates.length} products before being refused`);
+    }
+  } else {
+    // Read all the way through, so the checkpoint has done its job. Clearing
+    // it means the next run reads fresh prices rather than replaying these.
+    await rm(PROGRESS, { force: true }).catch(() => {});
+  }
 
   log(`  ${rows.length.toLocaleString()} products read`);
   if (noData || failed || missing) {

@@ -30,13 +30,25 @@ export function stripHtml(html) {
     .replace(/^\s+|\s+$/g, '');
 }
 
-/** Parse a price out of a messy string like "JOD 1,299.00" or "159.500 د.ا". */
+/**
+ * Parse a price out of a messy string like "JOD 1,299.00" or "159.500 د.ا".
+ *
+ * Reads the FIRST price in the string. Some shop themes print the price twice
+ * in one block - with tax, without tax, or simply repeated in the markup - and
+ * deleting every non-digit first glued the two together: "295 JOD 295 JOD"
+ * became 295,295. A gaming chair was listed at 139,139 JOD, and 46 products
+ * across two shops carried prices like that.
+ */
 export function parsePrice(str) {
   if (str === null || str === undefined) return null;
   if (typeof str === 'number') return Number.isFinite(str) ? str : null;
-  const cleaned = String(str)
-    .replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x0660))
-    .replace(/[^0-9.,]/g, '');
+
+  const western = String(str).replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x0660));
+  // Matched before anything is stripped, so the letters and symbols between
+  // two prices still separate them.
+  const first = western.match(/\d[\d.,]*/);
+  if (!first) return null;
+  const cleaned = first[0].replace(/[^0-9.,]/g, '');
   if (!cleaned) return null;
 
   // Decide which separator is the decimal point.

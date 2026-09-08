@@ -92,6 +92,23 @@ try {
       + `(e.g. ${orphans.slice(0, 3).map((o) => o.i).join(', ')}) - clicking them says "product not found"`);
   }
 
+  // A price nobody in Jordan would pay for a PC part is a parsing fault, not
+  // a bargain hunter's find. A shop theme printing its price twice once put a
+  // gaming chair on the site at 139,139 JOD.
+  const absurd = [];
+  for (const cat of index.categories || []) {
+    for (const sub of cat.subs || []) {
+      const f = path.join(dataDir, 'sub', `${sub.id}.json`);
+      if (!existsSync(f)) continue;
+      for (const p of JSON.parse(readFileSync(f, 'utf8')).products || []) {
+        if (!(p.price > 0) || p.price >= 20000) absurd.push(`${p.price} - ${String(p.title).slice(0, 50)}`);
+      }
+    }
+  }
+  if (absurd.length) {
+    problems.push(`${absurd.length} products have an impossible price (e.g. ${absurd.slice(0, 2).join(' | ')})`);
+  }
+
   const counted = (index.categories || []).flatMap((c) => c.subs || []).reduce((n, s) => n + s.count, 0);
   if (index.total !== counted) {
     problems.push(`index.json claims ${index.total} products but its categories add up to ${counted}`);

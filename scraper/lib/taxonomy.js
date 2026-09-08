@@ -228,8 +228,10 @@ const RULES = [
     sub: 'gpu',
     final: true,
     yes: [/\bgraphics?\s+cards?\b/i, /\bvideo\s+cards?\b/i, /\bvga\s+cards?\b/i],
-    // What is left are the things that attach TO a card and name it.
-    no: [/\blaptop\b/i, /\bnotebook\b/i, /\bholders?\b/i, /\bbrackets?\b/i, /\bsupports?\b/i, /\brisers?\b/i, /\bwater\s*block\b/i, /\bbackplates?\b/i, /\bmounts?\b/i, /\bstands?\b/i, /\bthermal\s+(paste|pad|compound|grease)\b/i, /\bcables?\b/i, /\bmouse\s*pad\b/i, /\bsleeves?\b/i, /\bextenders?\b/i],
+    // What is left are the things that attach TO a card and name it - plus
+    // the USB dongles that call themselves "external video card" and plug a
+    // second screen into a laptop.
+    no: [/\blaptop\b/i, /\bnotebook\b/i, /\bholders?\b/i, /\bbrackets?\b/i, /\bsupports?\b/i, /\brisers?\b/i, /\bwater\s*block\b/i, /\bbackplates?\b/i, /\bmounts?\b/i, /\bstands?\b/i, /\bthermal\s+(paste|pad|compound|grease)\b/i, /\bcables?\b/i, /\bmouse\s*pad\b/i, /\bsleeves?\b/i, /\bextenders?\b/i, /\busb\s*[\d.]*\s*(external|to)\b/i, /\bexternal\s+(vga|dvi|hdmi|video|graphics)\b/i],
   },
   {
     sub: 'gpu',
@@ -289,7 +291,9 @@ const RULES = [
     sub: 'cooling',
     // "Cooler Master" is a brand name, so `cooler` must not be followed by it.
     yes: [/\bcoolers?\b(?!\s*master)/i, /\bcooling\b/i, /\baio\b/i, /\bliquid\s+cool/i, /\bwater\s+cool/i, /\bheat\s*sink\b/i, /\bthermal\s+(paste|compound|grease)\b/i, /\bfans?\b/i, /\bradiator\b/i],
-    no: [/\bcases?\b/i, /\bchassis\b/i, /\bpapers?\b/i, /\bpos\b/i, /\breceipts?\b/i, /\brolls?\b/i, /\bprinter\b/i],
+    // Fan hubs, splitters and the fittings and tubing a water loop is
+    // plumbed with are all parts for cooling, not cooling.
+    no: [/\bcases?\b/i, /\bchassis\b/i, /\bpapers?\b/i, /\bpos\b/i, /\breceipts?\b/i, /\brolls?\b/i, /\bprinter\b/i, /\bfan\s+hubs?\b/i, /\bhub\s+control\b/i, /\b(soft|hard)\s+tube\b/i, /\bfittings?\b/i, /\bcompression\s+fitting\b/i, /\bcoolant\b/i, /\breservoirs?\b/i, /\bg1\/4\b/i],
   },
 
   // Console.
@@ -627,14 +631,23 @@ export function sanitize(sub, title, specs) {
   if (COMPONENT_SUBS.has(sub)
       && /\b(ryzen[\s™®]*[3579]|core[\s™®]*i[3579]|(core[\s™®]*)?ultra[\s™®]*[579][\s-]?\d{3}[a-z]*|i[3579][\s-]\d{4,5}[a-z]*|threadripper)/i.test(t)
       && /\b(rtx|gtx)[\s™®]*\d{3,4}\b|\brx\s*[5-9]\d{3}\b/i.test(t)) {
-    return /\blaptop\b|\bnotebook\b|\b\d{2}(\.\d)?["”]\s|\brog\s+(strix|zephyrus|flow|scar)\b/i.test(t)
+    // Same question as everywhere else - portable or desktop - so it uses the
+    // same answer. Spelling the families out separately here meant an
+    // "IdeaPad Gaming 3 Ryzen 5 5600H RTX 3050" was called a desktop.
+    return looksLikeALaptop(t)
       ? 'gaming-laptop'
       : 'prebuilt';
   }
 
   // Laptop product families. A "Zenbook ... Core Ultra 7 Processor" is a
   // laptop, not a processor - the word "Processor" describes what is inside.
-  if (PART_SUBS.has(sub) && LAPTOP_FAMILY.test(t)) {
+  //
+  // Unless the product says outright what it is. Manufacturers reuse names
+  // across completely different things: "Swift" is an Acer laptop and an XFX
+  // graphics card line, and "XFX Swift RX 9060 XT Triple Fan Gaming Edition"
+  // was being sold on the site as a gaming laptop.
+  const namesItself = /\b(graphics?\s+cards?|video\s+cards?|motherboards?|power\s+supply|memory\s+module)\b/i.test(t);
+  if (PART_SUBS.has(sub) && LAPTOP_FAMILY.test(t) && !namesItself) {
     return /\b(rtx|gtx)\b|\brog\b|\btuf\b|\bnitro\b|\blegion\b|\bloq\b|\bomen\b|\bvictus\b|\bkatana\b|\bcyborg\b|\bpredator\b|\bgaming\b/i.test(t)
       ? 'gaming-laptop'
       : 'laptop';
@@ -662,6 +675,10 @@ export function sanitize(sub, title, specs) {
     case 'psu':
       return keep(!!specs.wattage || /\bpower\s*supply\b|\bpsu\b|\b80\s*plus\b/i.test(t));
     case 'cpu':
+      // A CPU cooler's spec sheet lists the processor sockets it fits, which
+      // reads exactly like a processor's own. Those are coolers, not CPUs,
+      // and they belong in Cooling rather than being thrown away.
+      if (/\b(fans?|coolers?|cooling|heat\s*sinks?|radiators?|water\s*block)\b/i.test(t)) return 'cooling';
       return keep(!!specs.series || !!specs.socket || /\bprocessor\b|\bcpu\b/i.test(t));
     case 'motherboard':
       // Fans and coolers reach this category through shop category paths.
@@ -691,9 +708,11 @@ export function sanitize(sub, title, specs) {
       if (/\bkeypads?\b|\bstream\s+(controller|deck)\b/i.test(t)) return 'other';
       return keep(/\bpc\b|\bdesktop\b|\bsystem\b|\brig\b|\btower\b|\bbuild\b/i.test(t));
     case 'gaming-laptop':
-      // "ROG Swift PG259QN 24.5in 360Hz" is a monitor: ASUS uses ROG for
-      // both. A refresh rate and a screen size with no processor is a screen.
-      if (/\bswift\b|\bmonitors?\b/i.test(t)
+      // "ROG Swift PG259QN 24.5in 360Hz" is a monitor: ASUS uses ROG for both
+      // its screens and its laptops. It has to be ROG Swift, though - a bare
+      // "Swift" sent every Acer Swift laptop into Monitors.
+      // A refresh rate and a screen size with no processor is also a screen.
+      if (/\brog\s+swift\b|\bmonitors?\b/i.test(t)
           || (/\b\d{2,3}\s*hz\b/i.test(t) && !/\b(ryzen|core|ultra|intel|amd|i[3579])\b/i.test(t))) {
         return 'monitor';
       }
@@ -748,6 +767,9 @@ export function sanitize(sub, title, specs) {
       if (/\blightning\b/i.test(t) && !/\bpc\b|\bgaming\b|\bconsole\b/i.test(t)) return 'other';
       return keep(/\b(head\s*(set|phone)s?|ear\s*(phone|bud)s?|earphones?|earbuds?|headsets?|gaming\s+audio)\b/i.test(t));
     case 'keyboard':
+      // "Kingston 8GB USB 2.0 Music Keyboard Shape" is a flash drive that
+      // looks like a keyboard.
+      if (/\b(usb\s*\d|flash\s*drive|\d{1,3}\s*gb)\b/i.test(t) && /\bshape[ds]?\b/i.test(t)) return 'external-storage';
       return keep(/\b(keyboards?|keypads?|keeb)\b/i.test(t));
     case 'mouse':
       // "Mouse pad", "mouse bungee" and "mouse skates" all say mouse.
@@ -758,6 +780,7 @@ export function sanitize(sub, title, specs) {
     case 'speakers':
       // Leads named after what they plug into: "REMAX IPh to 3.5mm 1.2M".
       if (/\bto\s*3\.5\s*mm\b|\b3\.5\s*mm\s*to\b|\baux\b|\bjacks?\b/i.test(t)) return 'other';
+      if (/\bkaraoke\b/i.test(t)) return 'other';
       return keep(/\b(speakers?|sound\s*bars?|soundbars?|subwoofers?)\b/i.test(t));
     case 'webcam':
       return keep(/\b(web\s*cams?|webcams?|capture\s+cards?|stream\s*decks?)\b/i.test(t));
@@ -765,10 +788,17 @@ export function sanitize(sub, title, specs) {
       if (/\bmonitors?\b|\b\d{2,3}\s*hz\b/i.test(t)) return 'monitor';
       return keep(/\b(playstation|ps[45]|xbox|nintendo|switch|joy-?con|dualsense|dualshock|steam\s*deck|controller|gamepad|console)\b/i.test(t));
     case 'controller':
+      // The grips, charging kits and thumbstick caps sold for a controller
+      // are not controllers.
+      if (/\b(grips?|charge\s+(and|&)\s+play|charging\s+(kit|dock|station)|freek|thumb\s*sticks?|skins?|shells?|battery\s+packs?)\b/i.test(t)) return 'other';
       return keep(/\b(controller|game\s*pad|gamepad|joy\s*stick|joy-?con|dualsense|dualshock|racing\s+wheel|steering\s+wheel|flight\s+stick|pedals?)\b/i.test(t));
     case 'microphone':
       // The things a microphone sits on or in front of are not microphones.
       if (/\b(stands?|arms?|booms?|mounts?|holders?|pop\s*filters?|shock\s*mounts?|wind\s*screens?|foams?|clips?)\b/i.test(t)) return 'other';
+      // A karaoke machine is a party speaker, and a spare mic for a headset
+      // is a spare part.
+      if (/\bkaraoke\b/i.test(t)) return 'other';
+      if (/\breplacement\b/i.test(t)) return 'other';
       return keep(/\b(microphones?|mics?|podcast|lavalier|condenser)\b/i.test(t));
 
     case 'console':

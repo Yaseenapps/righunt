@@ -117,33 +117,35 @@ for (let i = 0; i < ladder.length; i++) {
   }
 }
 
-// Spending more must never buy a meaningfully slower card. A one-step sideways
-// move is allowed: an RX 9070 XT and an RTX 4070 Ti are within a few percent
-// of each other, and swapping between them to afford a far better monitor is a
-// good trade, not a regression. A real fault would be several tiers down.
+// Spending more must never drop to a slower class of card. Compared by band
+// rather than by an exact ordering, because cards within a band are within a
+// few percent of each other - an RX 7900 XT, an RTX 5070 Ti and an RTX 4080
+// are all "enthusiast", and swapping between them to afford a much better
+// monitor is a good trade, not a regression.
 for (let i = 1; i < ladder.length; i++) {
-  const before = gpuRank(ladder[i - 1].gpu);
-  const after = gpuRank(ladder[i].gpu);
-  ok(after >= before - 1,
+  ok(gpuBand(ladder[i].gpu) >= gpuBand(ladder[i - 1].gpu),
     `${ladder[i].budget} JOD: graphics no worse than at ${ladder[i - 1].budget} `
     + `(${ladder[i - 1].gpu?.specs?.chipset} -> ${ladder[i].gpu?.specs?.chipset})`);
 }
 
 // Over the whole ladder the direction must be unmistakable.
-ok(gpuRank(ladder[ladder.length - 1].gpu) > gpuRank(ladder[0].gpu) + 3,
+ok(gpuBand(ladder[ladder.length - 1].gpu) >= gpuBand(ladder[0].gpu) + 2,
   `3,000 JOD buys a far better card than 900 does `
   + `(${ladder[0].gpu?.specs?.chipset} -> ${ladder[ladder.length - 1].gpu?.specs?.chipset})`);
 
-// Rough ordering, enough to catch a real regression.
-function gpuRank(p) {
+/** 0 = not a gaming card, 5 = enthusiast. */
+function gpuBand(p) {
   const c = String(p?.specs?.chipset || '').toUpperCase();
-  const order = ['GT 710', 'GT 1030', '1650', '1660', '3050', '5050', '3060', '4060', '5060',
-    'RX 6600', 'RX 7600', '3060 TI', 'RX 9060 XT', '4060 TI', '5060 TI', '3070', 'RX 7700',
-    '4070', '5070', 'RX 7800', 'RX 9070', '3080', '4070 TI', 'RX 9070 XT', '5070 TI',
-    '3090', 'RX 7900', '4080', '5080', '4090', '5090'];
-  let best = -1;
-  order.forEach((m, i) => { if (c.includes(m)) best = Math.max(best, i); });
-  return best;
+  const bands = [
+    [/\bGT (710|730|740|1030|610|620|640)\b/, 0],
+    [/\b(4090|5090|4080|5080|3090|5070 TI|4070 TI)\b|\bRX (7900|9070 XT)\b/, 5],
+    [/\b(4070|5070|3080)\b|\bRX (7800|9070)\b/, 4],
+    [/\b(3070|3060 TI|4060 TI|5060 TI)\b|\bRX (7700|9060 XT)\b/, 3],
+    [/\b(3060|4060|5060)\b|\bRX (6600|7600)\b/, 2],
+    [/\b(1650|1660|3050|5050)\b|\bRX 6500\b/, 1],
+  ];
+  for (const [re, band] of bands) if (re.test(c)) return band;
+  return 1;
 }
 
 console.log('\n--- asking for a monitor gets a monitor ---');

@@ -7,6 +7,7 @@
 //
 // Run with: node scripts/test-taxonomy.mjs
 import { classify, sanitize, extractSpecs, isHidden } from '../scraper/lib/taxonomy.js';
+import { parsePrice } from '../scraper/lib/text.js';
 
 const CASES = [
   // [expected sub, title, why it used to go wrong]
@@ -70,8 +71,36 @@ const CASES = [
   // people do game with them. Only PC-part aisles reject phone kit.
   ['headset', 'Anker Soundcore V40i Open-Ear Wireless Headphones'],
 
+  // Manufacturers reuse the same name for different things.
+  ['gpu', 'XFX Swift AMD Radeon RX 9060 XT OC Triple Fan Gaming Edition 16GB Graphics Card',
+    '"Swift" is an Acer laptop line, so this card was sold as a gaming laptop'],
+  ['gaming-laptop', 'Acer Swift X 14 Gaming Laptop RTX 4050 Core i7',
+    'and the rule for ROG Swift monitors sent every Acer Swift into Monitors'],
+  ['gaming-laptop', 'Lenovo IdeaPad Gaming 3 Ryzen 5 5600H RTX 3050',
+    'a laptop whose family was not in one hand-written list became a desktop'],
+
+  // City Center's spec tables describe what a cooler fits, not what it is.
+  ['cooling', 'DeepCool FK120 3x 120mm 1850RPM 69CFM 4-Pin PWM High Performance Fan'],
+  ['other', 'DeepCool Fan Hub Control 4PWM Fan Speed Supports Fan 3Pin/4Pin'],
+  ['other', 'IOGEAR GUC2015V USB 2.0 External VGA Video Card',
+    'a USB display dongle is not a graphics card'],
+  ['other', 'Kingston HyperX Replacement Mic For Cloud Revolver'],
+  ['other', 'ONIKUMA L7 RGB Home Karaoke Machine Bluetooth-compatible Speaker'],
+  ['other', 'Dobe Controller Decorative Grip for Switch 2'],
+  ['controller', 'Sony DualSense Wireless Controller for PlayStation 5 - White'],
+
   // Things that must NOT reach a browsable category.
   ['networking', 'Mercusys MR60X AX1500 Wi-Fi 6 Router, Dual-Band'],
+];
+
+/** Prices printed twice by a shop's theme must not be read as one number. */
+const PRICES = [
+  [1299, 'JOD 1,299.00'],
+  [159.5, '159.500 د.ا'],
+  [295, '295 JOD 295 JOD'],
+  [139, '139 JOD139 JOD'],
+  [475, '475 JOD'],
+  [1.5, '1,50'],
 ];
 
 /**
@@ -92,7 +121,9 @@ let failed = 0;
 for (const [want, title, why] of CASES) {
   const { sub, certain } = classify({ title });
   const got = certain ? sub : (sanitize(sub, title, extractSpecs(sub, title, '')) || sub);
-  if (got === want) continue;
+  // "other" here means "must not be published". Which hidden bucket it lands
+  // in - other, cables, networking - makes no difference to a visitor.
+  if (got === want || (want === 'other' && isHidden(got))) continue;
   failed++;
   console.log(`FAIL  want ${want.padEnd(14)} got ${String(got).padEnd(14)} ${title.slice(0, 60)}`);
   if (why) console.log(`      (${why})`);
@@ -116,11 +147,16 @@ for (const [want, title, desc] of CAPACITIES) {
   }
 }
 
+for (const [want, text] of PRICES) {
+  const got = parsePrice(text);
+  if (got !== want) { failed++; console.log(`FAIL  price want ${want} got ${got}  from ${JSON.stringify(text)}`); }
+}
+
 // Hidden categories are the ones we deliberately do not show.
 for (const h of ['networking', 'cables', 'power', 'laptop', 'other']) {
   if (!isHidden(h)) { failed++; console.log(`FAIL  ${h} should be a hidden category`); }
 }
 
-const TOTAL = CASES.length + CAPACITIES.length + 6;
+const TOTAL = CASES.length + CAPACITIES.length + PRICES.length + 6;
 console.log(failed ? `\n${failed} of ${TOTAL} checks failed` : `\nALL PASS - ${TOTAL} checks`);
 process.exit(failed ? 1 : 0);
