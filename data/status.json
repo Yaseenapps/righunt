@@ -1,69 +1,87 @@
 {
-  "builtAt": "2026-09-08T13:13:36.974Z",
+  "builtAt": "2026-09-08T14:28:50.190Z",
   "stores": [
-    {
-      "store": "compujordan",
-      "name": "Compu Jordan",
-      "ok": true,
-      "cleanedFromDisk": true,
-      "products": 1507,
-      "seconds": 0
-    },
-    {
-      "store": "orientalstore",
-      "name": "Oriental Store",
-      "ok": true,
-      "cleanedFromDisk": true,
-      "products": 3517,
-      "seconds": 0
-    },
     {
       "store": "igeek",
       "name": "iGeek Megastore",
       "ok": true,
-      "cleanedFromDisk": true,
-      "products": 2965,
-      "seconds": 0
-    },
-    {
-      "store": "numberone",
-      "name": "Number One Store",
-      "ok": true,
-      "cleanedFromDisk": true,
-      "products": 1306,
-      "seconds": 0
-    },
-    {
-      "store": "whiteangel",
-      "name": "White Angel",
-      "ok": true,
-      "cleanedFromDisk": true,
-      "products": 418,
-      "seconds": 0
-    },
-    {
-      "store": "midas",
-      "name": "Midas Computer Center",
-      "ok": true,
-      "cleanedFromDisk": true,
-      "products": 626,
-      "seconds": 0
+      "products": 4966,
+      "seconds": 165
     },
     {
       "store": "gameon",
       "name": "GameOn JO",
       "ok": true,
-      "cleanedFromDisk": true,
-      "products": 1588,
-      "seconds": 0
+      "products": 2446,
+      "seconds": 48
     },
     {
       "store": "pccircle",
       "name": "PC Circle",
+      "ok": false,
+      "error": "HTTP 403 - the store is refusing automated requests",
+      "products": 1092,
+      "keptPrevious": true,
+      "seconds": 268
+    },
+    {
+      "store": "compujordan",
+      "name": "Compu Jordan",
+      "ok": false,
+      "error": "HTTP 522",
+      "products": 1507,
+      "keptPrevious": true,
+      "seconds": 135
+    },
+    {
+      "store": "citycenter",
+      "name": "City Center Computers",
+      "ok": false,
+      "error": "HTTP 403 - the store is refusing automated requests",
+      "products": 0,
+      "keptPrevious": false,
+      "seconds": 1889
+    },
+    {
+      "store": "orientalstore",
+      "name": "Oriental Store",
+      "ok": false,
+      "error": "HTTP 403 - the store is refusing automated requests",
+      "products": 3517,
+      "keptPrevious": true,
+      "seconds": 1
+    },
+    {
+      "store": "social",
+      "name": "Instagram & Facebook sellers",
       "ok": true,
-      "cleanedFromDisk": true,
-      "products": 1214,
+      "products": 0,
       "seconds": 0
+    },
+    {
+      "store": "whiteangel",
+      "name": "White Angel",
+      "ok": false,
+      "error": "HTTP 403 - the store is refusing automated requests",
+      "products": 418,
+      "keptPrevious": true,
+      "seconds": 1
+    },
+    {
+      "store": "numberone",
+      "name": "Number One Store",
+      "ok": true,
+      "products": 1958,
+      "seconds": 1430
+    },
+    {
+      "store": "midas",
+      "name": "Midas Computer Center",
+      "ok": false,
+      "error": "no products could be read from this store",
+      "products": 626,
+      "keptPrevious": true,
+      "seconds": 2
     }
   ]
 }
