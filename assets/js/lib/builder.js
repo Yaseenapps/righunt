@@ -107,7 +107,12 @@ export function parseQuestion(text) {
 
   // "build me a gaming pc" beats the fact that the sentence also says "pc".
   const wantsBuild = BUILD_WORDS.test(text) && !/\b(laptop|notebook)\b/i.test(text);
-  if (wantsBuild) return { intent: 'build', category, budget, constraints, text };
+  if (wantsBuild) {
+    // "...with the monitor" asks for a screen as part of the build. Ignoring
+    // it and returning eight parts and no screen is not an answer.
+    const withMonitor = /\b(with|include|including|plus|and)\s+(a\s+|the\s+|an\s+)?(monitor|screen|display)\b/i.test(text);
+    return { intent: 'build', category, budget, constraints, withMonitor, text };
+  }
   if (category) return { intent: 'pick', category, budget, constraints, text };
 
   // Off-topic is checked first: "can you help me with my school homework"
@@ -162,24 +167,103 @@ export function checkCompatibility(parts) {
 
 /* ---------------------------------------------------------------- picking */
 
-/** Best value inside a budget: cheap for what it is, and a complete listing. */
-function rank(list, ceiling) {
+/**
+ * Roughly how fast a graphics card is, 0-100.
+ *
+ * Price alone cannot answer this. A GT 1030 is an office display adapter that
+ * happens to cost about the same as a real budget card, and ranking on "uses
+ * up the budget" put one in a 1,700 JOD gaming build.
+ *
+ * Written out rather than calculated from the model number. A formula gets it
+ * wrong in both directions - it rates an RTX 5050 above an RTX 4070, and a
+ * GTX 1660 near an RTX 3060 - because neither generation nor tier on its own
+ * tracks real speed. Ordered fastest first; the first match wins.
+ */
+function gpuClass(specs = {}) {
+  const c = String(specs.chipset || '').toUpperCase().replace(/\s+/g, ' ');
+
+  const TIERS = [
+    [/\b5090\b/, 100], [/\b4090\b/, 96], [/\b5080\b/, 92], [/\b4080\b/, 88],
+    [/\bRX 7900\b/, 84], [/\b3090\b/, 84], [/\b5070 TI\b/, 82],
+    [/\bRX 9070 XT\b/, 78], [/\b4070 TI\b/, 78], [/\b3080\b/, 76],
+    [/\bRX 9070\b/, 74], [/\b5070\b/, 72], [/\bRX 7800\b/, 70], [/\b4070\b/, 68],
+    [/\b3070\b/, 62], [/\bRX 7700\b/, 62], [/\b5060 TI\b/, 58],
+    [/\bRX 9060 XT\b/, 56], [/\b4060 TI\b/, 54], [/\b3060 TI\b/, 52],
+    [/\b5060\b/, 50], [/\bRX 7600\b/, 48], [/\b4060\b/, 46], [/\b3060\b/, 42],
+    [/\bRX 6600\b/, 40], [/\b5050\b/, 38], [/\bARC [AB]7\d0\b/, 44],
+    [/\bARC [AB]5\d0\b/, 34], [/\b3050\b/, 32], [/\bRX 6500\b/, 26],
+    [/\b1660\b/, 26], [/\bARC [AB]3\d0\b/, 24], [/\b1650\b/, 20], [/\b1630\b/, 12],
+    // Display adapters. Not gaming cards at any price - this is the one that
+    // got picked for a 1,700 JOD build because it used up the budget.
+    [/\bGT (1030|710|730|740|610|620|640)\b/, 2],
+    [/\bQUADRO|NVS|FIREPRO|RADEON PRO\b/, 4],
+  ];
+  for (const [re, v] of TIERS) if (re.test(c)) return v;
+
+  // An unknown model sits mid-low, so it is never preferred over a card we
+  // can actually place.
+  return 22;
+}
+
+/** How much of a part you are getting, 0-100, from the specs we already read. */
+function capability(sub, p) {
+  const s = p.specs || {};
+  switch (sub) {
+    case 'gpu': return gpuClass(s);
+    case 'cpu': {
+      const cores = Number(s.cores) || 0;
+      const series = /i9|ryzen 9/i.test(s.series || '') ? 22
+        : /i7|ryzen 7/i.test(s.series || '') ? 16
+        : /i5|ryzen 5/i.test(s.series || '') ? 10 : 4;
+      return Math.min(100, cores * 2.4 + series * 2);
+    }
+    case 'ram': {
+      const gb = Number(s.capacity) || 0;
+      // 8GB is not a gaming amount any more; 16 is the floor, 32 the target.
+      return gb >= 64 ? 95 : gb >= 32 ? 85 : gb >= 16 ? 60 : gb >= 8 ? 20 : 5;
+    }
+    case 'storage': {
+      const gb = Number(s.capacity) || 0;
+      const fast = /nvme/i.test(s.type || '') ? 18 : 0;
+      return Math.min(100, (gb >= 2048 ? 60 : gb >= 1024 ? 48 : gb >= 512 ? 30 : 12) + fast);
+    }
+    case 'psu': {
+      // Wattage is a fit requirement, handled elsewhere. Here, efficiency and
+      // modularity are what separate a good supply from a cheap one.
+      const eff = /titanium/i.test(s.efficiency || '') ? 30
+        : /platinum/i.test(s.efficiency || '') ? 25
+        : /gold/i.test(s.efficiency || '') ? 20
+        : /bronze/i.test(s.efficiency || '') ? 10 : 0;
+      return Math.min(100, eff * 2 + (/full/i.test(s.modular || '') ? 20 : 0) + 20);
+    }
+    default: return 50;   // cases, cooling: taste, not performance
+  }
+}
+
+/**
+ * Best value inside a budget.
+ *
+ * Two things matter and they pull against each other: how much part you get,
+ * and not wasting money. Capability leads, because a build that spends its
+ * whole graphics budget on a display adapter is worse than one that spends
+ * half of it on a real card.
+ */
+function rank(list, ceiling, sub = null) {
   const affordable = list.filter((p) => p.price <= ceiling);
   const pool = affordable.length ? affordable : list;
-  const prices = pool.map((p) => p.price).sort((a, b) => a - b);
-  const mid = prices[Math.floor(prices.length / 2)] || 1;
 
   return [...pool].sort((a, b) => score(b) - score(a) || a.price - b.price);
 
   function score(p) {
-    // Spend the budget rather than hoarding it, but never reward overspending.
+    const able = sub ? capability(sub, p) : 50;
+    // Spend the budget rather than hoard it, but never reward overspending.
     const use = Math.min(p.price / ceiling, 1);
-    return use * 55
-      + (p.price <= mid ? 8 : 0)
-      + Math.min(p.off, 40) * 0.8
-      + (p.brand ? 10 : 0)
-      + Math.min(Object.keys(p.specs || {}).length, 6) * 3
-      + (p.image ? 5 : 0);
+    return able * 1.1
+      + use * 18
+      + Math.min(p.off, 40) * 0.5
+      + (p.brand ? 6 : 0)
+      + Math.min(Object.keys(p.specs || {}).length, 6) * 2
+      + (p.image ? 4 : 0);
   }
 }
 
@@ -205,7 +289,7 @@ export function pick(products, sub, { budget = Infinity, constraints = {}, limit
   const withinBudget = relaxed.filter((p) => p.price <= budget);
 
   return {
-    items: rank(withinBudget.length ? withinBudget : relaxed, budget).slice(0, limit),
+    items: rank(withinBudget.length ? withinBudget : relaxed, budget, sub).slice(0, limit),
     matchedConstraints: constrained.length > 0,
     anyWithinBudget: withinBudget.length > 0,
     cheapest: relaxed.length ? Math.min(...relaxed.map((p) => p.price)) : null,
@@ -223,7 +307,7 @@ const SPLIT = [
 
 const PART_LABEL = {
   gpu: 'Graphics card', cpu: 'Processor', motherboard: 'Motherboard', ram: 'Memory',
-  storage: 'Storage', psu: 'Power supply', case: 'Case', cooling: 'Cooling',
+  storage: 'Storage', psu: 'Power supply', case: 'Case', cooling: 'Cooling', monitor: 'Monitor',
 };
 
 /**
@@ -290,7 +374,15 @@ function pickPlatform(products, ceiling) {
  * Build a machine to a budget out of real, in-stock, compatible parts.
  * Returns either a build or an honest explanation of why not.
  */
-export function buildPC(products, budget) {
+/**
+ * Put a whole machine together inside a budget.
+ *
+ * `withMonitor` adds a screen to the build. Asking for "a PC for 1700 with
+ * the monitor" and getting eight parts and no screen back is not an answer to
+ * the question that was asked, so the screen takes its own slice of the money
+ * rather than being quietly dropped.
+ */
+export function buildPC(products, budget, { withMonitor = false } = {}) {
   const floor = floorPrice(products);
   if (!Number.isFinite(budget) || budget <= 0) {
     return { ok: false, reason: 'no-budget', floor };
@@ -305,9 +397,17 @@ export function buildPC(products, budget) {
     return list.length ? list.reduce((a, b) => (a.price <= b.price ? a : b)) : null;
   };
 
+  // A screen comes out of the same money, so the parts get what is left.
+  const monitorShare = withMonitor ? 0.2 : 0;
+  const forParts = budget * (1 - monitorShare);
+  if (withMonitor) {
+    chosen.monitor = rank(products.filter((p) => p.sub === 'monitor'), budget * monitorShare, 'monitor')[0]
+      || cheapestOf('monitor');
+  }
+
   // Platform first, as one decision.
   const platformShare = (SPLIT.find(([s]) => s === 'cpu')[1] + SPLIT.find(([s]) => s === 'motherboard')[1]);
-  const platform = pickPlatform(products, budget * platformShare);
+  const platform = pickPlatform(products, forParts * platformShare);
   if (!platform) return { ok: false, reason: 'too-low', floor, budget };
   chosen.cpu = platform.cpu;
   chosen.motherboard = platform.board;
@@ -315,19 +415,25 @@ export function buildPC(products, budget) {
   // Memory has to match what that board takes, and be desktop memory.
   const wantDdr = chosen.motherboard.specs?.memory;
   const ramFits = (p) => isDesktopRam(p) && (!wantDdr || !p.specs?.ddr || p.specs.ddr === wantDdr);
-  chosen.ram = rank(products.filter((p) => p.sub === 'ram' && ramFits(p)), budget * 0.09)[0]
+  // 8GB is not a gaming amount any more. A 16GB kit often sits just outside
+  // the memory allowance while the budget as a whole can plainly afford it,
+  // so the allowance is stretched before settling for less - that is what put
+  // 8GB in a 1,200 JOD build.
+  const ramPool = products.filter((p) => p.sub === 'ram' && ramFits(p));
+  const enough = ramPool.filter((p) => (p.specs?.capacity || 0) >= 16 && p.price <= forParts * 0.16);
+  chosen.ram = rank(enough.length ? enough : ramPool, forParts * 0.11, 'ram')[0]
     || cheapestOf('ram', ramFits) || cheapestOf('ram');
 
-  chosen.gpu = rank(products.filter((p) => p.sub === 'gpu'), budget * 0.34)[0] || cheapestOf('gpu');
+  chosen.gpu = rank(products.filter((p) => p.sub === 'gpu'), forParts * 0.34, 'gpu')[0] || cheapestOf('gpu');
 
   // The supply is sized for the card that was actually chosen.
   const need = (chosen.gpu ? gpuWatts(chosen.gpu.specs) : 0) + 150;
   const psuFits = (p) => (p.specs?.wattage || 0) >= need;
-  chosen.psu = rank(products.filter((p) => p.sub === 'psu' && psuFits(p)), budget * 0.08)[0]
+  chosen.psu = rank(products.filter((p) => p.sub === 'psu' && psuFits(p)), forParts * 0.08, 'psu')[0]
     || cheapestOf('psu', psuFits) || cheapestOf('psu');
 
   for (const [sub, share] of [['storage', 0.09], ['case', 0.07], ['cooling', 0.05]]) {
-    chosen[sub] = rank(products.filter((p) => p.sub === sub), budget * share)[0] || cheapestOf(sub);
+    chosen[sub] = rank(products.filter((p) => p.sub === sub), forParts * share, sub)[0] || cheapestOf(sub);
   }
 
   // Nothing above guarantees the total fits, so trim until it does: replace
@@ -361,8 +467,8 @@ export function buildPC(products, budget) {
     if (!swapped) break;
   }
 
-  const parts = SPLIT
-    .map(([sub]) => chosen[sub] && { sub, label: PART_LABEL[sub], product: chosen[sub] })
+  const parts = [...SPLIT.map(([sub]) => sub), 'monitor']
+    .map((sub) => chosen[sub] && { sub, label: PART_LABEL[sub], product: chosen[sub] })
     .filter(Boolean)
     .sort((a, b) => b.product.price - a.product.price);
 

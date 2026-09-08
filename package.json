@@ -5,8 +5,9 @@
   "type": "module",
   "description": "Price comparison for PC components and gaming gear sold in Jordan",
   "scripts": {
-    "scrape": "node scraper/build.js",
-    "dev": "node scripts/serve.js"
+    "scrape": "node --max-old-space-size=6144 scraper/build.js",
+    "dev": "node scripts/serve.js",
+    "clean": "node scraper/build.js --clean"
   },
   "dependencies": {
     "cheerio": "^1.2.0"

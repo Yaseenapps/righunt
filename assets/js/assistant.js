@@ -200,7 +200,7 @@ async function answer(text, feed) {
   let nodes;
 
   if (q.intent === 'build') {
-    nodes = buildAnswer(buildPC(products, q.budget));
+    nodes = buildAnswer(buildPC(products, q.budget, { withMonitor: q.withMonitor }));
   } else if (q.intent === 'pick' && q.category) {
     nodes = pickAnswer(q, pick(products, q.category, {
       budget: q.budget ?? Infinity, constraints: q.constraints, limit: 3,

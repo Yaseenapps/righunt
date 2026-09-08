@@ -40,6 +40,16 @@ export async function home() {
     frag.append(section(row.title, row.subtitle, rail(row.items), rowLink(row)));
   }
 
+  const back = await data.restocked().catch(() => ({ items: [] }));
+  if (back.items?.length) {
+    frag.append(section(
+      'Back in stock',
+      'Sold out before, available again now',
+      rail(back.items.slice(0, 20)),
+      { href: href('restocked'), text: 'See all' },
+    ));
+  }
+
   return frag;
 }
 
@@ -153,6 +163,53 @@ export async function deals(page = 1, navigate) {
     grid(slice),
     pager(p, pages, (n) => {
       navigate(href(`deals?page=${n}`));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }),
+    el('p', { class: 'pager-info' }, `Page ${p} of ${pages} · showing ${slice.length} of ${items.length.toLocaleString()}`),
+  );
+}
+
+/**
+ * Things a shop has put back on the shelf.
+ *
+ * We compare every product against the previous reading, six hours earlier,
+ * so this is the one thing here a shopper could not reasonably find alone -
+ * it means noticing the moment a sold-out card reappears at one of eight
+ * shops. Empty on a brand-new site, because a restock is a change between
+ * two readings and the first reading has nothing to compare against.
+ */
+export async function restocked(page = 1, navigate) {
+  const [{ items = [], days = 14 }, { idx }] = await Promise.all([data.restocked(), data.meta()]);
+
+  if (!items.length) {
+    return el('div', {},
+      crumbs([{ text: 'Home', href: href('home') }, { text: 'Back in stock' }]),
+      emptyState('Nothing has come back yet',
+        `We re-check all ${plural(idx.stores.length, 'shop')} every six hours and list anything that returns to stock here. `
+        + `Nothing has reappeared in the last ${days} days — check back soon.`,
+        { href: href('home'), text: 'Back home' }),
+    );
+  }
+
+  const pages = Math.max(1, Math.ceil(items.length / PER_PAGE));
+  const p = Math.min(Math.max(1, page), pages);
+  const slice = items.slice((p - 1) * PER_PAGE, p * PER_PAGE);
+
+  return el('div', {},
+    crumbs([{ text: 'Home', href: href('home') }, { text: 'Back in stock' }]),
+    el('div', { class: 'page-head' },
+      el('div', {},
+        el('h1', {}, 'Back in stock'),
+        el('p', { class: 'count' },
+          el('b', {}, plural(items.length, 'product')),
+          items.length === 1
+            ? ` that sold out and has returned in the last ${days} days`
+            : ` that sold out and have returned in the last ${days} days, newest first`),
+      ),
+    ),
+    grid(slice),
+    pager(p, pages, (n) => {
+      navigate(href(`restocked?page=${n}`));
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }),
     el('p', { class: 'pager-info' }, `Page ${p} of ${pages} · showing ${slice.length} of ${items.length.toLocaleString()}`),

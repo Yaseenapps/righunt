@@ -177,7 +177,9 @@ export async function fetchMany(urls, {
         failed++;
       }
       done++;
-      if (onProgress && done % 500 === 0) onProgress(done, urls.length, failed, missing);
+      // Awaited, so a progress handler that saves a checkpoint finishes
+      // writing before the next page lands on top of it.
+      if (onProgress && done % 500 === 0) await onProgress(done, urls.length, failed, missing);
     }
   };
 

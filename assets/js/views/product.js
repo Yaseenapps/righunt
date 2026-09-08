@@ -1,7 +1,7 @@
-import { el, money, plural, labelise, specValue, similarity, imageOrPlaceholder, toast, compareKey, href } from '../util.js';
+import { el, money, plural, labelise, specValue, similarity, imageOrPlaceholder, toast, compareKey, href, clip } from '../util.js';
 import * as data from '../data.js';
 import * as store from '../state.js';
-import { crumbs, emptyState, storeOf, section, rail } from '../components.js';
+import { crumbs, emptyState, storeOf, section, rail, isBackInStock } from '../components.js';
 
 export async function product(subId, productId) {
   const p = await data.product(subId, productId);
@@ -56,6 +56,11 @@ export async function product(subId, productId) {
     el('div', { class: `stock ${p.inStock ? 'in' : 'out'}` },
       el('i', {}),
       p.inStock ? 'In stock at this store' : 'Out of stock at this store'),
+
+    // Worth saying plainly: this one was gone and is not any more.
+    p.inStock && isBackInStock(p.id)
+      ? el('p', { class: 'back-note' }, 'This sold out and has come back — stock like this can go again quickly.')
+      : null,
 
     el('div', { class: 'seller' },
       el('div', { class: 'sq', style: `background:${s.color}` }, initials(s.name)),
@@ -149,7 +154,7 @@ export async function product(subId, productId) {
       { text: 'Home', href: href('home') },
       info.catName ? { text: info.catName, href: href(`category/${info.cat}`) } : null,
       { text: info.name, href: href(`products/${realSub}`) },
-      { text: p.title.length > 42 ? `${p.title.slice(0, 42)}…` : p.title },
+      { text: clip(p.title, 42) },
     ].filter(Boolean)),
 
     el('div', { class: 'pdp' }, gallery, buy),

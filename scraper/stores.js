@@ -43,23 +43,15 @@ export const STORES = [
     ],
   },
   {
-    // DISABLED: citycenter.jo answers our crawler with HTTP 403. That is the
-    // shop deliberately refusing automated access, so we do not work around
-    // it. Flip `enabled` back to true to retry - if the block is lifted the
-    // adapter works unchanged.
+    // Read through its sitemap and product pages rather than its category
+    // listings: robots.txt disallows the paginated listing URLs an OpenCart
+    // crawl needs. See adapters/citycenter.js for the full reasoning.
     id: 'citycenter',
     name: 'City Center Computers',
     base: 'https://citycenter.jo',
-    adapter: 'opencart',
+    adapter: 'citycenter',
     color: '#06d6a0',
-    enabled: false,
-    roots: [
-      '/gaming',
-      '/pc-and-laptops',
-      '/computer-hardware',
-      '/networking',
-      '/electronics',
-    ],
+    enabled: true,
   },
   {
     id: 'orientalstore',

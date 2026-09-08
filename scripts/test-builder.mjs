@@ -45,5 +45,47 @@ for (const [sub, budget, c] of [['ram', 120, { capacity: 32, ddr: 'DDR5' }], ['m
   ok(r.items.every((p) => p.sub === sub), `${sub}: only returns that category`);
 }
 
+/* --------------------------------------------------------------------------
+ * What a build must never contain.
+ *
+ * Every one of these is something the assistant actually put in a build and a
+ * shopper had to spot: an Oppo phone as the memory, a GT 1030 office display
+ * adapter as the graphics card of a 1,700 JOD machine, 8GB of memory, an
+ * external USB drive as the internal storage, and a whole prebuilt PC filed
+ * as a graphics card.
+ * ----------------------------------------------------------------------- */
+console.log('\n--- a build has to be buildable ---');
+
+const NOT_A_PART = /\b(phone|oppo|redmi|realme|galaxy\s+a\d|cph\d{4}|tablet|hat|cap\b|earphone)\b/i;
+const DISPLAY_ADAPTER = /\bGT\s*(1030|710|730|610|620|640)\b/i;
+
+for (const budget of [1200, 1700, 2000]) {
+  const b = buildPC(products, budget);
+  ok(b.ok, `${budget} JOD: returns a build`);
+  if (!b.ok) continue;
+
+  const part = (sub) => b.parts.find((x) => x.sub === sub)?.product;
+  const titles = b.parts.map((x) => x.product.title).join(' | ');
+
+  ok(b.total <= budget, `${budget} JOD: stays inside the budget (${Math.round(b.total)})`);
+  ok(!NOT_A_PART.test(titles), `${budget} JOD: nothing that is not a PC part`);
+  ok(!DISPLAY_ADAPTER.test(part('gpu')?.specs?.chipset || ''),
+    `${budget} JOD: not an office display adapter`);
+  ok((part('ram')?.specs?.capacity || 0) >= 16, `${budget} JOD: 16GB of memory or more`);
+  ok(!/\bexternal\b|\bmy\s*passport\b/i.test(part('storage')?.title || ''),
+    `${budget} JOD: internal storage, not a USB drive`);
+  ok(b.parts.every((x) => x.product.image), `${budget} JOD: every part has a photo`);
+  ok(!b.problems?.length, `${budget} JOD: parts fit together${b.problems?.length ? ` (${b.problems.join('; ')})` : ''}`);
+}
+
+console.log('\n--- asking for a monitor gets a monitor ---');
+const q = parseQuestion('build me a pc for 1700jds with the monitor');
+ok(q.withMonitor === true, 'the question is read as wanting a screen');
+const withScreen = buildPC(products, q.budget, { withMonitor: q.withMonitor });
+ok(withScreen.parts.some((x) => x.sub === 'monitor'), 'the build includes a monitor');
+ok(withScreen.total <= q.budget, `still inside the budget (${Math.round(withScreen.total)} of ${q.budget})`);
+const noScreen = buildPC(products, q.budget);
+ok(!noScreen.parts.some((x) => x.sub === 'monitor'), 'and no monitor when none was asked for');
+
 console.log(fails ? `\n${fails} FAILED` : '\nALL PASS');
 process.exit(fails ? 1 : 0);

@@ -34,6 +34,23 @@ export const home = () => load('data/home.json');
 export const deals = () => load('data/deals.json');
 export const search = () => load('data/search.json');
 
+/**
+ * Products a shop has put back on the shelf recently. Empty until the site
+ * has been refreshed at least twice, since a restock is a change between two
+ * readings, not something a single reading can show.
+ */
+export const restocked = () => load('data/restocked.json').catch(() => ({ items: [], count: 0, days: 14 }));
+
+/** Ids that came back into stock, for badging cards wherever they appear. */
+let backSet = null;
+export async function backInStock() {
+  if (!backSet) {
+    const r = await restocked();
+    backSet = new Map((r.items || []).map((p) => [p.id, p.backAt]));
+  }
+  return backSet;
+}
+
 export async function sub(id) {
   const data = await load(`data/sub/${id}.json`);
   return data.products || [];

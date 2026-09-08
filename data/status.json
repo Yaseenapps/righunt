@@ -1,72 +1,69 @@
 {
-  "builtAt": "2026-09-08T07:21:35.466Z",
+  "builtAt": "2026-09-08T13:13:36.974Z",
   "stores": [
-    {
-      "store": "igeek",
-      "name": "iGeek Megastore",
-      "ok": true,
-      "products": 4967,
-      "seconds": 162
-    },
-    {
-      "store": "gameon",
-      "name": "GameOn JO",
-      "ok": true,
-      "products": 2446,
-      "seconds": 46
-    },
-    {
-      "store": "pccircle",
-      "name": "PC Circle",
-      "ok": true,
-      "products": 10,
-      "seconds": 4
-    },
     {
       "store": "compujordan",
       "name": "Compu Jordan",
       "ok": true,
-      "products": 3159,
-      "seconds": 240
+      "cleanedFromDisk": true,
+      "products": 1507,
+      "seconds": 0
     },
     {
       "store": "orientalstore",
       "name": "Oriental Store",
       "ok": true,
-      "products": 5470,
-      "seconds": 1105
-    },
-    {
-      "store": "social",
-      "name": "Instagram & Facebook sellers",
-      "ok": true,
-      "products": 0,
+      "cleanedFromDisk": true,
+      "products": 3517,
       "seconds": 0
     },
     {
-      "store": "whiteangel",
-      "name": "White Angel",
-      "ok": false,
-      "error": "HTTP 403 - the store is refusing automated requests",
-      "products": 422,
-      "keptPrevious": true,
-      "seconds": 1
+      "store": "igeek",
+      "name": "iGeek Megastore",
+      "ok": true,
+      "cleanedFromDisk": true,
+      "products": 2965,
+      "seconds": 0
     },
     {
       "store": "numberone",
       "name": "Number One Store",
       "ok": true,
-      "products": 1958,
-      "seconds": 1455
+      "cleanedFromDisk": true,
+      "products": 1306,
+      "seconds": 0
+    },
+    {
+      "store": "whiteangel",
+      "name": "White Angel",
+      "ok": true,
+      "cleanedFromDisk": true,
+      "products": 418,
+      "seconds": 0
     },
     {
       "store": "midas",
       "name": "Midas Computer Center",
-      "ok": false,
-      "error": "no products could be read from this store",
-      "products": 664,
-      "keptPrevious": true,
-      "seconds": 2
+      "ok": true,
+      "cleanedFromDisk": true,
+      "products": 626,
+      "seconds": 0
+    },
+    {
+      "store": "gameon",
+      "name": "GameOn JO",
+      "ok": true,
+      "cleanedFromDisk": true,
+      "products": 1588,
+      "seconds": 0
+    },
+    {
+      "store": "pccircle",
+      "name": "PC Circle",
+      "ok": true,
+      "cleanedFromDisk": true,
+      "products": 1214,
+      "seconds": 0
     }
   ]
 }

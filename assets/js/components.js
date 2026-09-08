@@ -28,15 +28,27 @@ export function saveButton(product) {
 }
 
 /** The product tile used in every grid and rail. */
+/**
+ * Ids that a shop has recently put back on the shelf. Held here as a plain
+ * map so `card` stays synchronous - it is called thousands of times while
+ * rendering a category, and awaiting inside it would make every grid flicker.
+ * Filled once at start-up by app.js.
+ */
+let BACK = new Map();
+export function setBackInStock(map) { BACK = map instanceof Map ? map : new Map(); }
+export const isBackInStock = (id) => BACK.has(id);
+
 export function card(p) {
   const s = storeOf(p.store);
   const link = href(`product/${p.sub}/${p.id}`);
+  const back = p.inStock !== false && BACK.has(p.id);
 
   return el('article', { class: 'card' },
     saveButton(p),
     el('a', { href: link, class: 'card-media', 'aria-label': p.title },
       p.off > 0 ? el('span', { class: 'tag' }, `-${p.off}%`) : null,
       p.inStock === false ? el('span', { class: 'tag tag-oos' }, 'Out of stock') : null,
+      back ? el('span', { class: 'tag tag-back' }, 'Back in stock') : null,
       // Private sellers are not shops - say so on the card itself.
       p.social ? el('span', { class: 'tag tag-social' },
         p.social.platform === 'facebook' ? 'Facebook seller' : 'Instagram seller') : null,

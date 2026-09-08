@@ -27,6 +27,7 @@ export function initNav(meta) {
     ...meta.idx.categories.map((c) =>
       el('a', { class: 'catlink', href: href(`category/${c.id}`), dataset: { cat: c.id } }, c.name)),
     el('a', { class: 'catlink is-deal', href: href('deals'), dataset: { cat: 'deals' } }, 'Deals'),
+    el('a', { class: 'catlink is-back', href: href('restocked'), dataset: { cat: 'restocked' } }, 'Back in stock'),
   );
 }
 

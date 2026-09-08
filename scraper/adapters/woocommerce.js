@@ -27,10 +27,16 @@ export async function scrape(store, log) {
     : '  this shop asks crawlers not to use per_page, so pages are read at the API default');
 
   const rows = [];
+  // The page size is ours only when `per_page` is allowed; otherwise it is
+  // whatever the API defaults to, and we learn it from the first response.
+  // Assuming PER_PAGE here ended the loop after a single page of 10.
+  let pageSize = bulk ? PER_PAGE : 0;
+
   for (let page = 1; page <= (bulk ? 200 : 1200); page++) {
     const batch = await fetchJson(
       `${api}?${bulk ? `per_page=${PER_PAGE}&` : ''}page=${page}&catalog_visibility=catalog`,
     );
+    if (!pageSize && Array.isArray(batch)) pageSize = batch.length;
     if (!Array.isArray(batch) || !batch.length) break;
 
     for (const p of batch) {
@@ -77,7 +83,7 @@ export async function scrape(store, log) {
     // At the API's own page size this runs to hundreds of pages, so it
     // reports progress periodically rather than line by line.
     if (bulk || page % 25 === 0) log(`  page ${page}: running total ${rows.length}`);
-    if (batch.length < PER_PAGE) break;
+    if (batch.length < pageSize) break;
   }
   return rows;
 }

@@ -1,7 +1,7 @@
-import { el, money, plural, tokens, toast, href } from '../util.js';
+import { el, money, plural, tokens, toast, href, clip } from '../util.js';
 import * as data from '../data.js';
 import * as store from '../state.js';
-import { grid, crumbs, emptyState, pager, storeOf } from '../components.js';
+import { grid, crumbs, emptyState, pager, storeOf, isBackInStock } from '../components.js';
 
 /* ---------- saved ---------- */
 
@@ -28,6 +28,10 @@ export async function saved() {
   }
 
   const drops = items.filter((i) => i.savedPrice && i.price < i.savedPrice);
+  // Saving something that is sold out is how you say "tell me when this is
+  // back". With no accounts there is nobody to email, so the answer waits
+  // here for the next visit.
+  const back = items.filter((i) => isBackInStock(i.id));
 
   return el('div', {},
     crumbs([{ text: 'Home', href: href('home') }, { text: 'Saved' }]),
@@ -42,11 +46,18 @@ export async function saved() {
     ),
 
     savedTotal(items),
+    back.length ? el('div', { class: 'panel panel-back' },
+      el('h2', {}, back.length === 1 ? 'One of your saved products is back in stock' : `${back.length} of your saved products are back in stock`),
+      el('ul', { style: 'margin:0;padding-inline-start:18px;font-size:14px;line-height:1.9' },
+        back.map((b) => el('li', {},
+          el('a', { href: href(`product/${b.sub}/${b.id}`), style: 'font-weight:600;text-decoration:underline' }, clip(b.title)),
+          ` — available again at ${b.storeName || 'the store'}`))),
+    ) : null,
     drops.length ? el('div', { class: 'panel', style: 'border-color:var(--good)' },
       el('h2', {}, 'Price drops since you saved'),
       el('ul', { style: 'margin:0;padding-inline-start:18px;font-size:14px;line-height:1.9' },
         drops.map((d) => el('li', {},
-          el('a', { href: href(`product/${d.sub}/${d.id}`), style: 'font-weight:600;text-decoration:underline' }, d.title.slice(0, 56)),
+          el('a', { href: href(`product/${d.sub}/${d.id}`), style: 'font-weight:600;text-decoration:underline' }, clip(d.title)),
           ` — now ${money(d.price)} JOD, was ${money(d.savedPrice)} JOD`))),
     ) : null,
     grid(items),

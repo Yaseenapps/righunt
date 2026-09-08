@@ -190,6 +190,8 @@ html[data-theme="dark"] .ico-sun { display: block; }
 .catlink[aria-current="true"] { color: var(--on-volt); background: var(--volt-fill); border-bottom-color: var(--volt-fill); }
 .catlink.is-deal { color: var(--hot); }
 .catlink.is-deal[aria-current="true"] { color: #fff; background: var(--hot); border-bottom-color: var(--hot); }
+.catlink.is-back { color: var(--good); }
+.catlink.is-back[aria-current="true"] { color: #05130c; background: var(--good); border-bottom-color: var(--good); }
 
 /* subcategory bar */
 .subbar { background: #14151d; border-top: 1px solid var(--head-line); border-bottom: 1px solid var(--head-line); }
@@ -368,6 +370,8 @@ main { padding: 24px 0 72px; min-height: 64vh; }
 }
 /* Bottom-left, so it clears both the discount flag and the save button. */
 .tag-oos { top: auto; bottom: 0; background: #6b7182; border-end-end-radius: 0; border-start-end-radius: 8px; }
+/* Same corner as "out of stock" - a product is never both at once. */
+.tag-back { top: auto; bottom: 0; background: var(--good); border-end-end-radius: 0; border-start-end-radius: 8px; }
 
 /* Sits over the photo, never over the price or the shop name. */
 .save-btn {
@@ -521,6 +525,9 @@ html[data-theme="dark"] .fopt input { accent-color: var(--volt-fill); }
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 18px 20px; margin: 22px 0; }
 .panel h2 { font-size: 14px; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 2px solid var(--ink); }
 .panel .note { margin: 10px 0 0; font-size: 12px; color: var(--ink-3); }
+/* Something a shopper was waiting for has come back - worth being loud. */
+.panel-back { border-color: var(--good); background: color-mix(in srgb, var(--good) 8%, var(--surface)); }
+.panel-back h2 { border-bottom-color: var(--good); color: var(--good); }
 .desc { white-space: pre-wrap; font-size: 14px; color: var(--ink-2); line-height: 1.68; max-height: 22em; overflow: hidden; position: relative; }
 .desc.open { max-height: none; }
 .desc-fade { position: absolute; inset-inline: 0; bottom: 0; height: 62px; background: linear-gradient(transparent, var(--surface)); }
@@ -752,3 +759,10 @@ html[data-theme="dark"] .as-warn { color: #ffc46b; }
   padding-bottom: 1px; word-break: break-all;
 }
 .foot-mail:hover { border-bottom-color: var(--volt-fill); }
+
+/* Product page: the one-line explanation behind a "Back in stock" badge. */
+.back-note {
+  margin: 10px 0 0; padding: 9px 12px; font-size: 13px; line-height: 1.5;
+  color: var(--good); border: 1px solid var(--good); border-radius: 8px;
+  background: color-mix(in srgb, var(--good) 8%, transparent);
+}

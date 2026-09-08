@@ -11,7 +11,11 @@ export const CATEGORIES = [
       { id: 'cpu',         name: 'Processors' },
       { id: 'motherboard', name: 'Motherboards' },
       { id: 'ram',         name: 'Memory (RAM)' },
-      { id: 'storage',     name: 'Storage' },
+      { id: 'storage',          name: 'Storage (SSD & HDD)' },
+      // Portable drives, memory cards and flash drives. Kept alongside
+      // internal storage rather than hidden: a console or a handheld is
+      // expanded with exactly these.
+      { id: 'external-storage', name: 'External & Portable Storage' },
       { id: 'psu',         name: 'Power Supplies' },
       { id: 'case',        name: 'Cases' },
       { id: 'cooling',     name: 'Cooling & Fans' },
@@ -75,7 +79,7 @@ export const CATEGORIES = [
 // never published. This site is gaming and PC building only: no printers,
 // no routers, no office laptops, no kettles.
 export const HIDDEN_SUBS = [
-  'laptop', 'external-storage', 'networking', 'cables', 'power', 'other',
+  'laptop', 'networking', 'cables', 'power', 'other',
 ];
 
 export const SUB_TO_CAT = (() => {
@@ -143,13 +147,20 @@ const RULES = [
 
   {
     sub: 'monitor',
-    yes: [/\bmonitor\b/i, /\b(curved|gaming)\s+screen\b/i],
-    no: [/\bstands?\b/i, /\bmounts?\b/i, /\barms?\b/i, /\bcables?\b/i, /\bcleaners?\b/i, /\blights?\b/i, /\blamps?\b/i, /\blight\s*bar\b/i, /\bcameras?\b/i, /\bspeakers?\b/i, /\bhoods?\b/i, /\bhubs?\b/i, /\bdocking\b/i, /\bdocks?\b/i, /\bswitchs?\b/i, /\bsplitters?\b/i],
+    yes: [/\bmonitors?\b/i, /\b(curved|gaming)\s+screens?\b/i],
+    // "Speakers" is deliberately absent: half the monitors on the market
+    // advertise built-in ones, and vetoing on the word filed every single
+    // one of them under Speakers. The speakers rule below stands aside for
+    // anything that calls itself a monitor instead.
+    // "Lights" was too broad on its own: every second panel advertises "Less
+    // Blue Light" or "Low Blue Light", and that filed them all out of
+    // Monitors. Only the lamps that clip ONTO a monitor veto it.
+    no: [/\bstands?\b/i, /\bmounts?\b/i, /\barms?\b/i, /\bcables?\b/i, /\bcleaners?\b/i, /\bscreen\s*bar\b/i, /\bmonitor\s+lights?\b/i, /\blamps?\b/i, /\blight\s*bar\b/i, /\bcameras?\b/i, /\bhoods?\b/i, /\bhubs?\b/i, /\bdocking\b/i, /\bdocks?\b/i, /\bswitchs?\b/i, /\bsplitters?\b/i],
   },
 
   // Consumer electronics that merely MENTION components ("TV box - 4GB RAM",
   // "tablet LCD screen"). Caught here so they never reach the component rules.
-  { sub: 'webcam', yes: [/\bweb\s*cam\b/i, /\bcapture\s+card\b/i, /\bstream\s*deck\b/i, /\bring\s+light\b/i] },
+  { sub: 'webcam', yes: [/\bweb\s*cams?\b/i, /\bcapture\s+cards?\b/i, /\bstream\s*decks?\b/i, /\bring\s+lights?\b/i] },
   {
     // `final` means the store's category path may NOT override this. A Roku
     // filed by a shop under "Displays" is still not a monitor.
@@ -188,23 +199,45 @@ const RULES = [
     no: [/\bfor\s+desk\b/i, /\bdesktop\b/i, /\bmats?\b/i, /\bpads?\b/i, /\blamps?\b/i, /\bmounts?\b/i, /\borganizers?\b/i, /\bholders?\b/i, /\bclips?\b/i, /\bstands?\b/i, /\bcables?\b/i, /\bplants?\b/i, /\bfans?\b/i, /\bcontrollers?\b/i, /\bknobs?\b/i, /\bclamps?\b/i, /\bspeakers?\b/i],
   },
 
-  { sub: 'mousepad', yes: [/\bmouse\s*pad\b/i, /\bmousepad\b/i, /\bdesk\s*(mat|pad)\b/i] },
-  { sub: 'keyboard', yes: [/\bkeyboard\b/i, /\bkeycaps?\b/i, /\bswitches?\s+(set|pack)\b/i] },
+  { sub: 'mousepad', yes: [/\bmouse\s*pads?\b/i, /\bmousepads?\b/i, /\bdesk\s*(mat|pad)s?\b/i] },
+  // Plurals matter more than they look: a shop writing "MSI Monitors 24in"
+  // or "Gaming Keyboards" was missed entirely by the singular form, and only
+  // its category path saved it. City Center publishes no category path.
+  { sub: 'keyboard', yes: [/\bkeyboards?\b/i, /\bkeycaps?\b/i, /\bswitches?\s+(set|pack)\b/i] },
   { sub: 'mouse', yes: [/\bmouse\b/i, /\bmice\b/i], no: [/\bpad\b/i, /\bbungee\b/i] },
-  { sub: 'headset', yes: [/\bhead\s*set\b/i, /\bhead\s*phones?\b/i, /\bear\s*(buds?|phones?)\b/i] },
-  { sub: 'microphone', yes: [/\bmicrophone\b/i, /\bmic\b/i, /\bpodcast\b/i] },
-  { sub: 'webcam', yes: [/\bweb\s*cam\b/i, /\bcapture\s+card\b/i, /\bstream\s*deck\b/i, /\bring\s+light\b/i] },
-  { sub: 'speakers', yes: [/\bspeakers?\b/i, /\bsound\s*bar\b/i, /\bsubwoofer\b/i] },
-  { sub: 'controller', yes: [/\bcontroller\b/i, /\bgame\s*pad\b/i, /\bjoy\s*stick\b/i, /\bjoy[\s-]?con\b/i, /\bracing\s+wheel\b/i, /\bsteering\s+wheel\b/i, /\bflight\s+stick\b/i, /\bpedals?\b/i] },
+  { sub: 'headset', yes: [/\bhead\s*sets?\b/i, /\bhead\s*phones?\b/i, /\bear\s*(buds?|phones?)\b/i] },
+  // A headset that mentions its microphone is still a headset.
+  { sub: 'microphone', yes: [/\bmicrophone\b/i, /\bmic\b/i, /\bpodcast\b/i], no: [/\bhead\s*(set|phone)s?\b/i, /\bearphones?\b/i, /\bearbuds?\b/i] },
+  { sub: 'webcam', yes: [/\bweb\s*cams?\b/i, /\bcapture\s+cards?\b/i, /\bstream\s*decks?\b/i, /\bring\s+lights?\b/i] },
+  // Screens and headsets both advertise built-in speakers; neither is one.
+  { sub: 'speakers', yes: [/\bspeakers?\b/i, /\bsound\s*bar\b/i, /\bsubwoofer\b/i], no: [/\bmonitors?\b/i, /\bdisplays?\b/i, /\bhead\s*(set|phone)s?\b/i, /\bearbuds?\b/i, /\b\d{2,3}\s*hz\b/i] },
+  // "Fan Controller", "RGB Controller" and "USB Controller Card" are not
+  // things you play games with.
+  {
+    sub: 'controller',
+    yes: [/\bcontroller\b/i, /\bgame\s*pad\b/i, /\bjoy\s*stick\b/i, /\bjoy[\s-]?con\b/i, /\bracing\s+wheel\b/i, /\bsteering\s+wheel\b/i, /\bflight\s+stick\b/i, /\bpedals?\b/i],
+    no: [/\b(fan|rgb|argb|led|lighting|hub|usb|sata|raid|nvme|pci-?e|domain|smart\s*home)\s+controller\b/i],
+  },
 
   // Core components.
+  {
+    // A product that calls itself a graphics card is one. Nearly every card
+    // sold advertises its fans and its cooler in the title, so those words
+    // cannot be allowed to veto the rule the way they do below - that filed
+    // "Radeon RX 7800 XT Gaming OC, 3x WINDFORCE Fans" under Cooling.
+    sub: 'gpu',
+    final: true,
+    yes: [/\bgraphics?\s+cards?\b/i, /\bvideo\s+cards?\b/i, /\bvga\s+cards?\b/i],
+    // What is left are the things that attach TO a card and name it.
+    no: [/\blaptop\b/i, /\bnotebook\b/i, /\bholders?\b/i, /\bbrackets?\b/i, /\bsupports?\b/i, /\brisers?\b/i, /\bwater\s*block\b/i, /\bbackplates?\b/i, /\bmounts?\b/i, /\bstands?\b/i, /\bthermal\s+(paste|pad|compound|grease)\b/i, /\bcables?\b/i, /\bmouse\s*pad\b/i, /\bsleeves?\b/i, /\bextenders?\b/i],
+  },
   {
     sub: 'gpu',
     // Radeon desktop models start at RX 4xx / RX 5xxx, so "RX 120" (a fan
     // model number) cannot be mistaken for a graphics card.
-    yes: [/\bgraphics?\s+card\b/i, /\bvideo\s+card\b/i, /\bvga\s+card\b/i, /\bgpu\b/i, /\b(rtx|gtx)\s*\d{3,4}\b/i, /\brx\s*([4-9]\d{2}|[5-9]\d{3})\s*(xt|gre|xtx)?\b/i, /\barc\s+[ab]\d{3}\b/i, /\bgt\s*(6[13]0|7[13]0|1030)\b/i],
-    // "GPU" turns up in the titles of cases, pastes and mounts that merely
-    // support one, so those all veto the rule.
+    yes: [/\bgpu\b/i, /\b(rtx|gtx)\s*\d{3,4}\b/i, /\brx\s*([4-9]\d{2}|[5-9]\d{3})\s*(xt|gre|xtx)?\b/i, /\barc\s+[ab]\d{3}\b/i, /\bgt\s*(6[13]0|7[13]0|1030)\b/i],
+    // A bare model number is much weaker evidence, so here the parts that
+    // merely support a card - coolers, cases, pastes - do veto the rule.
     no: [/\blaptop\b/i, /\bnotebook\b/i, /\bholder\b/i, /\bbracket\b/i, /\bsupport\b/i, /\briser\b/i, /\bfans?\b/i, /\bcooler\b/i, /\bradiator\b/i, /\bcables?\b/i, /\bmouse\s*pad\b/i, /\bcase\b/i, /\bcasing\b/i, /\bchassis\b/i, /\bthermal\b/i, /\bpastes?\b/i, /\bwater\s*block\b/i, /\bbackplate\b/i, /\bmounts?\b/i, /\bpower\s*supply\b/i, /\bmotherboard\b/i],
   },
   {
@@ -241,8 +274,10 @@ const RULES = [
   {
     sub: 'storage',
     yes: [/\bssd\b/i, /\bhdd\b/i, /\bhard\s*(disk|drive)\b/i, /\bnvme\b/i, /\bm\.2\b/i, /\bsolid\s*state\b/i],
-    // PCIe adapter cards, cables and storage boxes are not drives.
-    no: [/\bexternal\b/i, /\bportable\b/i, /\benclosures?\b/i, /\bcaddy\b/i, /\bdocks?\b/i, /\blaptop\b/i, /\bcards?\b/i, /\bcables?\b/i, /\bbox\b/i, /\bpci[\s-]?e\b/i, /\badapt[oe]rs?\b/i, /\bbrackets?\b/i],
+    // PCIe adapter cards, cables and storage boxes are not drives. "PCIe" on
+    // its own is not evidence of any of those - every NVMe drive made states
+    // its PCIe generation - so only the adapter phrasing vetoes.
+    no: [/\bexternal\b/i, /\bportable\b/i, /\benclosures?\b/i, /\bcaddy\b/i, /\bdocks?\b/i, /\blaptop\b/i, /\bcards?\b/i, /\bcables?\b/i, /\bbox\b/i, /\bpci[\s-]?e\s+(adapt[oe]r|riser|expansion|converter)\b/i, /\badapt[oe]rs?\b/i, /\bbrackets?\b/i],
   },
   {
     sub: 'case',
@@ -264,11 +299,24 @@ const RULES = [
     no: [/\bcontroller\b/i, /\bgame\b/i, /\bcase\b/i, /\bstand\b/i, /\bcharg/i, /\bskin\b/i, /\bcable\b/i, /\bheadset\b/i],
   },
   { sub: 'video-game', yes: [/\b(ps[45]|xbox|switch|nintendo)\s+game\b/i, /\bgame\s+(disc|card)\b/i, /\bfc\s*2[5-9]\b/i, /\bcall\s+of\s+duty\b/i, /\bblack\s+ops\b/i, /\bmario\b/i, /\bzelda\b/i, /\bgift\s+card\b/i, /\bdigital\s+card\b/i] },
-  { sub: 'console-accessory', yes: [/\b(ps[45]|xbox|switch|nintendo|playstation)\b/i] },
+  // "Switch" is a games console and a piece of network kit. A managed PoE
+  // switch with 24 gigabit ports is plainly the second one.
+  {
+    sub: 'console-accessory',
+    yes: [/\b(ps[45]|xbox|switch|nintendo|playstation)\b/i],
+    // Network switches, and the light switches a smart-home aisle sells,
+    // are both "switch" and neither is a Nintendo.
+    no: [
+      /\b(gigabit|ethernet|poe|managed|unmanaged|network|kvm|rack|port)\b.{0,30}\bswitch\b/i,
+      /\bswitch\b.{0,30}\b(gigabit|ethernet|poe|ports?|rj-?45|uplink|rack)\b/i,
+      /\b(light|wall|dimmer|smart|touch|toggle|rocker|power|kill)\s+switch(es)?\b/i,
+      /\bswitch(es)?\b.{0,20}\b(gang|way)\b/i,
+    ],
+  },
 
   // Accessories.
   { sub: 'external-storage', yes: [/\bexternal\s+(ssd|hdd|drive|storage)\b/i, /\bportable\s+(ssd|hdd|drive)\b/i, /\bflash\s+(drive|disk|memory)\b/i, /\busb\s+(drive|stick)\b/i, /\bmemory\s+card\b/i, /\bmicro\s*sd\b/i, /\benclosure\b/i] },
-  { sub: 'networking', yes: [/\brouter\b/i, /\bwi[\s-]?fi\b/i, /\bethernet\b/i, /\bnetwork\b/i, /\bmesh\b/i, /\bextender\b/i, /\baccess\s+point\b/i] },
+  { sub: 'networking', yes: [/\brouter\b/i, /\bwi[\s-]?fi\b/i, /\bethernet\b/i, /\bnetwork\b/i, /\bmesh\b/i, /\bextender\b/i, /\baccess\s+point\b/i, /\b(gigabit|poe|managed|unmanaged|rack|kvm|\d+[\s-]?port)\b.{0,30}\bswitch\b/i, /\bswitch\b.{0,30}\b(gigabit|poe|ports?|rj-?45|uplink)\b/i] },
   { sub: 'cables', yes: [/\bcable\b/i, /\badapter\b/i, /\bhub\b/i, /\bdock(ing)?\b/i, /\bconverter\b/i, /\bhdmi\b/i, /\bdisplay\s*port\b/i, /\bextension\b/i] },
   { sub: 'power', yes: [/\bups\b/i, /\bpower\s*bank\b/i, /\bcharger\b/i, /\bsurge\b/i, /\bpower\s*(socket|strip)\b/i, /\bstabilizer\b/i] },
 ];
@@ -326,6 +374,10 @@ const WEAK = new Set(['other', 'console-accessory']);
 const WHOLE_MACHINE = new Set(['gaming-laptop', 'laptop', 'prebuilt']);
 const COMPONENT_SUBS = new Set(['gpu', 'cpu', 'ram', 'motherboard', 'psu', 'storage', 'case', 'cooling']);
 
+// The aisles that only ever hold parts that go inside a desktop PC. Nothing
+// made for a phone can legitimately appear in one of these.
+const PC_PART_SUBS = new Set([...COMPONENT_SUBS, 'monitor', 'external-storage']);
+
 // Anything that can be a part OF a laptop. A "MacBook Air ... Backlit Magic
 // Keyboard" is a laptop, not a keyboard.
 const PART_SUBS = new Set([
@@ -333,7 +385,40 @@ const PART_SUBS = new Set([
 ]);
 
 // Laptop model families, so a machine is never filed as one of its parts.
-const LAPTOP_FAMILY = /\b(zenbook|vivobook|expertbook|proart|ideapad|yoga|thinkpad|thinkbook|macbook|pavilion|envy|inspiron|latitude|aspire|swift|extensa|travelmate|nitro\s*v|rog\s+(strix\s+)?(flow|g\d+|zephyrus|scar|ally)|tuf\s+gaming\s+[af]\d+|legion\s+\d+|loq|omen\s+\d+|victus\s+\d+|katana|cyborg|bravo|modern\s+\d+|prestige|summit|galaxy\s+book|matebook|note?book)\b/i;
+// "ROG Swift" is Asus's monitor line and "Acer Swift" is a laptop, so `swift`
+// only counts when ROG is not in front of it.
+/**
+ * Does this title read as a list of the parts inside one machine?
+ *
+ * Three different component families named together - a processor, a graphics
+ * card and an amount of memory - is a build sheet, not a part. Two is not
+ * enough: a motherboard legitimately names its socket and its memory type,
+ * and a graphics card names its own VRAM.
+ */
+/** A portable machine rather than a desktop one. */
+function looksLikeALaptop(title) {
+  return LAPTOP_FAMILY.test(title)
+    || /\b(laptop|notebook|ultrabook)\b/i.test(title)
+    // A screen size is the giveaway: desktops do not have one.
+    || /\b1[2-8](\.\d)?\s*(inch|["”″])/i.test(title)
+    || /\b(nitro|predator|legion|loq|omen|victus|katana|cyborg|raider|vector|stealth|titan|alienware|blade|zephyrus|scar|tuf\s+f?\d{2}|gf\d{2}|gp\d{2}|gl\d{2})\b/i.test(title);
+}
+
+function countsAsWholeSystem(title) {
+  const t = ` ${title} `;
+  const families = [
+    /\b(core\s*i[3579][\s-]*\d{4,5}|ryzen\s*[3579]\s*\d{4}|i[3579][\s-]?\d{4,5}[a-z]{0,2})\b/i,
+    /\b((rtx|gtx)\s*\d{3,4}|rx\s*[5-9]\d{3}|gt\s*\d{3,4}|arc\s+[ab]\d{3})\b/i,
+    /\b\d{1,3}\s*gb\s*(ram|ddr[45]|memory)\b|\b(ddr[45])\s*\d{1,3}\s*gb\b/i,
+    /\b\d{3,4}\s*gb\s*(ssd|nvme|hdd)\b|\b\d\s*tb\s*(ssd|nvme|hdd)\b/i,
+  ].filter((re) => re.test(t)).length;
+
+  if (families >= 3) return true;
+  // Two families plus the shop calling it a build is enough on its own.
+  return families >= 2 && /\b(build|bundle|system|combo\s+pc|full\s+set)\b/i.test(t);
+}
+
+const LAPTOP_FAMILY = /\b(zenbook|vivobook|expertbook|proart|ideapad|yoga|thinkpad|thinkbook|macbook|pavilion|envy|inspiron|latitude|aspire|(?<!rog\s)swift|extensa|travelmate|nitro\s*v|rog\s+(strix\s+)?(flow|g\d+|zephyrus|scar|ally)|tuf\s+gaming\s+[af]\d+|legion\s+\d+|loq|omen\s+\d+|victus\s+\d+|katana|cyborg|bravo|modern\s+\d+|prestige|summit|galaxy\s+book|matebook|note?book)\b/i;
 
 /**
  * Decide the subcategory for a product.
@@ -354,7 +439,14 @@ const EXACT_TYPE = {
   controller: 'controller', console: 'console',
 };
 
-export function classify({ title = '', storePath = '', productType = '', description = '' }) {
+export function classify({ title = '', storePath = '', productType = '', description = '', certain = '' }) {
+  // Some shops publish a structured spec table - "CPU Socket Type", "Chipset",
+  // "Refresh Rate", "Panel Type". An adapter that recognises one of those
+  // fingerprints knows what the product is on the shop's own authority, which
+  // beats anything we could infer from a marketing title. A graphics card
+  // whose title advertises its three cooling fans is still a graphics card.
+  if (certain && SUB_TO_CAT[certain]) return { sub: certain, cat: SUB_TO_CAT[certain], certain: true };
+
   // A shop calling something a "PC" outranks anything we could read off the
   // title, so this short-circuits before the component rules can misfire.
   const exact = EXACT_TYPE[productType.trim().toLowerCase()];
@@ -367,6 +459,23 @@ export function classify({ title = '', storePath = '', productType = '', descrip
     || /\bPC$/i.test(title.trim());
   if (exact === 'prebuilt' && looksLikeAMachine && !isAddOn) {
     return { sub: 'prebuilt', cat: SUB_TO_CAT.prebuilt };
+  }
+
+  // A listing that spells out a processor AND a graphics card AND its memory
+  // is describing a whole computer, whatever aisle it sits in. Shops write
+  // these as "INTEL CORE I5 12400F // GT 1030 2GB // 8GB RAM - Low Budget
+  // Build", and the graphics model in the middle used to win, which put an
+  // entire PC in Graphics Cards - and let the build assistant buy one as if
+  // it were a card.
+  if (!isAddOn && countsAsWholeSystem(title)) {
+    // A laptop's spec list looks exactly the same, so decide which kind of
+    // machine it is before answering. Without this an "Acer Nitro V 15 -
+    // Core i5-13420H - RTX 2050 - 8GB" became a desktop and then, failing to
+    // mention a tower, disappeared from the site altogether.
+    const machine = looksLikeALaptop(title)
+      ? (/\b(rtx|gtx|radeon\s+rx|gaming)\b/i.test(title) ? 'gaming-laptop' : 'laptop')
+      : 'prebuilt';
+    return { sub: machine, cat: SUB_TO_CAT[machine] };
   }
 
   const byTitle = matchRules(` ${title} `);
@@ -405,6 +514,21 @@ export function classify({ title = '', storePath = '', productType = '', descrip
 // a "128GB flash drive") is a sign we mis-read the product.
 const RAM_SIZES = new Set([1, 2, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128, 192, 256, 512]);
 
+/**
+ * Phones and tablets. They quote a storage size and a memory size in the
+ * title exactly the way a memory kit does, so without this an Oppo handset
+ * reads as 256GB of desktop RAM - and the build assistant will happily put
+ * one in a gaming PC. It did.
+ */
+const IS_PHONE_OR_TABLET = new RegExp([
+  '\\b(smart\\s*phones?|mobile\\s+phones?|cell\\s*phones?|handsets?)\\b',
+  '\\bfor\\s+(mobile|phones?|smart\\s*phones?)\\b',
+  '\\b(i[Pp]hone|i[Pp]ad|galaxy\\s+(a|s|z|note|tab)\\s*\\d|redmi|poco|realme|oppo|vivo|infinix|tecno|honor\\s+\\d|huawei\\s+(nova|mate|p\\d)|oneplus|nokia\\s+[a-z]?\\d)\\b',
+  '\\b(dual\\s+sim|nano\\s+sim|esim)\\b',
+  // Model codes phones use and components do not: "CPH2727", "SM-A165F".
+  '\\b(cph|sm-[a-z]|rmx|v\\d{4}[a-z]{2})\\d{3,4}\\b',
+].join('|'), 'i');
+
 // Categories where a "mount"/"bracket"/"stand" in the title almost always
 // means an accessory for the part, not the part. Deliberately excludes
 // prebuilt/laptop, whose long spec titles often mention such words.
@@ -441,6 +565,16 @@ const ACCESSORY_NOUNS = new RegExp([
   'splitters?', 'converters?', 'extenders?', 'armrests?', 'cushions?', 'casters?',
   'screws?', 'standoffs?', 'thermal\\s+(paste|compound|grease|pads?)', 'anti[\\s-]?static',
   'carry\\s+cases?', 'travel\\s+cases?', 'holders?', 'hangers?',
+  // Parts and spares for a peripheral, which read as the peripheral itself.
+  // A "mouse wrist rest" is not a mouse and "mouse skates" are not a mouse.
+  'wrist\\s*rests?', 'palm\\s*rests?', 'wrist\\s*pads?',
+  'skates?', 'glides?', 'mouse\\s*feet',
+  'key\\s*caps?', 'keycaps?', 'puller', 'switch\\s*sets?',
+  '(mechanical|keyboard|hot[\\s-]?swap)\\s+switch(es)?', 'switch(es)?\\s+(tester|opener|lube)',
+  'ear\\s*(pads?|cushions?|tips?|hooks?)', 'replacement\\s+(pads?|cushions?|tips?)',
+  'thumb\\s*grips?', 'analog\\s+caps?', 'joystick\\s+caps?',
+  'decorations?', 'decals?', 'faceplates?', 'shells?',
+  'dust\\s*plugs?', 'silicone\\s+covers?', 'protective\\s+films?',
 ].map((p) => `\\b${p}\\b`).join('|'), 'i');
 
 /**
@@ -455,6 +589,12 @@ export function sanitize(sub, title, specs) {
   // Compu Jordan's own builds are named "PC-041 [ CPU / board / RAM / ... ]".
   // The bracket lists every part, so only the name itself is reliable.
   if (/^\s*PC[\s-]?\d{2,3}\b/i.test(title)) return 'prebuilt';
+
+  // Nothing made for a phone belongs in a PC component aisle: not the handset
+  // whose title lists "256GB 8GB RAM" like a memory kit, and not the magnetic
+  // clip-on cooler that reads as a CPU cooler. Peripherals are left alone -
+  // earbuds and mobile controllers are real things people gaming with.
+  if (PC_PART_SUBS.has(sub) && IS_PHONE_OR_TABLET.test(t)) return 'other';
 
   // A screen size plus a refresh rate plus a processor is a laptop, whatever
   // component the rest of the title happens to name.
@@ -508,6 +648,9 @@ export function sanitize(sub, title, specs) {
 
   switch (sub) {
     case 'ram':
+      // Phones and tablets list their memory in the title - "Oppo A5 256GB
+      // 8GB RAM" - and one of them ended up as the memory in a build.
+      if (IS_PHONE_OR_TABLET.test(t)) return 'other';
       if (specs.capacity && !RAM_SIZES.has(specs.capacity)) return 'other';
       // "Battle Ram Gaming Combo Set" is a keyboard and mouse. The word "ram"
       // in a product name is not memory.
@@ -525,14 +668,27 @@ export function sanitize(sub, title, specs) {
       if (/\bfans?\b|\bcoolers?\b|\bcooling\b|\bradiators?\b/i.test(t)) return 'other';
       return keep(/\bmother\s*board\b|\bmainboard\b|\bmobo\b|\b(lga\s?\d{4}|am[45])\b/i.test(t));
     case 'monitor':
+      // A handheld console has a screen and a refresh rate; it is not a
+      // monitor. Neither is a phone or a tablet.
+      if (/\bhandhelds?\b|\bretro\s+(gaming\s+)?console\b|\bgame\s*boy\b|\bportable\s+console\b/i.test(t)) return 'other';
       // A "4K 60Hz" HDMI adapter is not a monitor - it needs a screen size
       // or to actually call itself one.
       return keep(/\bmonitor\b/i.test(t) || (!!specs.size && !/\badapter\b|\bcable\b|\bconverter\b|\bmount\b|\bstand\b|\bsplitter\b/i.test(t)));
     case 'storage':
+      // A drive you plug into a USB port is not the drive that goes inside
+      // the machine, and the build assistant must never fit one as internal
+      // storage. It fitted a WD My Passport once.
+      if (/\bexternal\b|\bportable\s+(hard|hdd|ssd|drive)\b|\bmy\s*passport\b|\bcanvio\b|\bexpansion\s+drive\b/i.test(t)) {
+        return 'external-storage';
+      }
       // A "2.5/3.5 HDD Dock" holds a drive, it is not one.
       if (/\bdocks?\b|\bdocking\b|\benclosures?\b|\bcadd(y|ies)\b|\breaders?\b|\bconverters?\b|\bbays?\b/i.test(t)) return 'other';
       return keep(!!specs.type || /\bssd\b|\bhdd\b|\bnvme\b|\bhard\s*(disk|drive)\b/i.test(t));
     case 'prebuilt':
+      // "Intel Core i7-12700KF Gaming Desktop Processor" is a processor that
+      // says "desktop", and a stream keypad is not a computer.
+      if (/\bprocessors?\b|\bcpu\b/i.test(t) && !/\b(gaming\s+pc|desktop\s+(pc|computer)|tower\s+pc|pre[\s-]?built|barebone|mini\s*pc|all[\s-]in[\s-]one)\b/i.test(t)) return 'cpu';
+      if (/\bkeypads?\b|\bstream\s+(controller|deck)\b/i.test(t)) return 'other';
       return keep(/\bpc\b|\bdesktop\b|\bsystem\b|\brig\b|\btower\b|\bbuild\b/i.test(t));
     case 'gaming-laptop':
       // "ROG Swift PG259QN 24.5in 360Hz" is a monitor: ASUS uses ROG for
@@ -557,9 +713,16 @@ export function sanitize(sub, title, specs) {
       if (/\bmonitor\s+(stand|arm|mount)\b|\bdesk\s+mount\b|\bfoot\s*rests?\b|\brisers?\b|\bfloor\s*mats?\b|\borganisers?\b/i.test(t)) return 'other';
       // A "table clamp" and a "table top football" are not desks.
       return keep(/\bdesks?\b|\b(computer|gaming|office|study)\s+tables?\b/i.test(t) && !/\bdesktop\b/i.test(t));
-    case 'case':
+    case 'case': {
+      // Cases are sold on their glass side panel and their bundled fans, so
+      // those words are only evidence against when nothing in the title says
+      // "case" outright. Checked first, or a Lancool 216RX advertising its
+      // mesh front panel stops being a case.
+      const namesACase = /\b(pc|computer|gaming|desktop|mid[\s-]?tower|full[\s-]?tower|mini[\s-]?tower|atx|itx)\s*(case|casing|chassis)\b/i.test(t)
+        || /\b(case|casing|chassis)\b[^.]{0,40}\b(mid|full|mini)[\s-]?tower\b/i.test(t)
+        || /\b(mid|full|mini)[\s-]?tower\b[^.]{0,40}\b(case|casing|chassis)\b/i.test(t);
       // "Building Block Chassis Fan" says chassis but is a fan.
-      if (/\bfans?\b|\bcoolers?\b|\bradiators?\b|\bfilters?\b|\bpanels?\b/i.test(t)) return 'other';
+      if (!namesACase && /\bfans?\b|\bcoolers?\b|\bradiators?\b|\bfilters?\b|\bpanels?\b/i.test(t)) return 'other';
       // A "PC Case Bag" carries a case; it is not one.
       if (/\bi?phones?\b|\bgalaxy\b|\bipad\b|\btablet\b|\bmagnetic\b|\bsilicone\b|\bbags?\b|\bbackpacks?\b|\bsleeves?\b/i.test(t)) return 'other';
       // Needs to name itself a PC case. A bare "PC" is not enough: a phone
@@ -571,16 +734,42 @@ export function sanitize(sub, title, specs) {
         || /\bchassis\b/i.test(t)
         || /\bcasing\b/i.test(t),
       );
+    }
     // These three are reached mostly through a shop's own category path, so
     // the title has to back it up. Without that, an office superstore's
     // sharpeners and sticky notes land in Console Accessories and Controllers.
+    // Peripherals had no checks at all, so anything the rules guessed stayed
+    // guessed. A Bluetooth beanie hat sat in Headsets, and a phone lead sat
+    // in Speakers, both at about 2 JOD.
+    case 'headset':
+      if (/\b(hats?|caps?|beanies?|beanie|scarf|gloves?|masks?)\b/i.test(t)) return 'other';
+      if (/\b(stands?|hooks?|hangers?|splitters?|extension)\b/i.test(t)) return 'other';
+      // A Lightning plug only fits an iPhone. Nobody games on one of these.
+      if (/\blightning\b/i.test(t) && !/\bpc\b|\bgaming\b|\bconsole\b/i.test(t)) return 'other';
+      return keep(/\b(head\s*(set|phone)s?|ear\s*(phone|bud)s?|earphones?|earbuds?|headsets?|gaming\s+audio)\b/i.test(t));
+    case 'keyboard':
+      return keep(/\b(keyboards?|keypads?|keeb)\b/i.test(t));
+    case 'mouse':
+      // "Mouse pad", "mouse bungee" and "mouse skates" all say mouse.
+      if (/\b(pads?|mats?|bungees?|holders?|grips?)\b/i.test(t)) return 'other';
+      return keep(/\b(mouse|mice)\b/i.test(t));
+    case 'mousepad':
+      return keep(/\b(mouse\s*pads?|mousepads?|desk\s*mats?|mouse\s*mats?|gaming\s+(pad|mat|surface))\b/i.test(t));
+    case 'speakers':
+      // Leads named after what they plug into: "REMAX IPh to 3.5mm 1.2M".
+      if (/\bto\s*3\.5\s*mm\b|\b3\.5\s*mm\s*to\b|\baux\b|\bjacks?\b/i.test(t)) return 'other';
+      return keep(/\b(speakers?|sound\s*bars?|soundbars?|subwoofers?)\b/i.test(t));
+    case 'webcam':
+      return keep(/\b(web\s*cams?|webcams?|capture\s+cards?|stream\s*decks?)\b/i.test(t));
     case 'console-accessory':
       if (/\bmonitors?\b|\b\d{2,3}\s*hz\b/i.test(t)) return 'monitor';
       return keep(/\b(playstation|ps[45]|xbox|nintendo|switch|joy-?con|dualsense|dualshock|steam\s*deck|controller|gamepad|console)\b/i.test(t));
     case 'controller':
       return keep(/\b(controller|game\s*pad|gamepad|joy\s*stick|joy-?con|dualsense|dualshock|racing\s+wheel|steering\s+wheel|flight\s+stick|pedals?)\b/i.test(t));
     case 'microphone':
-      return keep(/\b(microphone|mic|podcast|lavalier|condenser)\b/i.test(t));
+      // The things a microphone sits on or in front of are not microphones.
+      if (/\b(stands?|arms?|booms?|mounts?|holders?|pop\s*filters?|shock\s*mounts?|wind\s*screens?|foams?|clips?)\b/i.test(t)) return 'other';
+      return keep(/\b(microphones?|mics?|podcast|lavalier|condenser)\b/i.test(t));
 
     case 'console':
       // A monitor that mentions console compatibility is still a monitor.
@@ -722,10 +911,24 @@ export function extractSpecs(sub, title, description = '') {
     }
 
     case 'storage': {
-      const tb = cap(/\b(\d{1,2})\s*TB\b/i);
-      const gb = cap(/\b(\d{3,4})\s*GB\b/i);
-      if (tb) s.capacity = parseInt(tb[1], 10) * 1024;
-      else if (gb) s.capacity = parseInt(gb[1], 10);
+      // Capacity is decided from the title as a whole, or from the
+      // description as a whole - never half from each. Checking "TB" and then
+      // "GB" separately let a drive whose title says 250GB take a "2TB" out
+      // of the description's list of other models in the range, and a 240GB
+      // drive take its "92TBW" endurance figure - which came out as 94,208GB
+      // and made it the best storage in the catalogue.
+      const sizeIn = (text) => {
+        const tb = text.match(/\b(\d{1,2})(?:\.(\d))?\s*TB\b(?!W)/i);
+        const gb = text.match(/\b(\d{3,5})\s*GB\b(?!W)/i);
+        // Whichever appears first is the one naming this product.
+        if (tb && gb) return tb.index < gb.index ? tbVal(tb) : parseInt(gb[1], 10);
+        if (tb) return tbVal(tb);
+        if (gb) return parseInt(gb[1], 10);
+        return null;
+      };
+      const tbVal = (m) => Math.round((parseInt(m[1], 10) + (m[2] ? Number(`0.${m[2]}`) : 0)) * 1024);
+      const size = sizeIn(title) ?? sizeIn(T);
+      if (size) s.capacity = size;
       if (has(/\bnvme\b|\bm\.2\b/i)) s.type = 'NVMe SSD';
       else if (has(/\bssd\b/i)) s.type = 'SATA SSD';
       else if (has(/\bhdd\b|\bhard\s*(disk|drive)\b/i)) s.type = 'Hard Drive';

@@ -1,10 +1,10 @@
 import { el, $, $$, debounce, money, href, currentPath, BASE } from './util.js';
 import * as data from './data.js';
 import * as store from './state.js';
-import { setStores, emptyState } from './components.js';
+import { setStores, emptyState, setBackInStock } from './components.js';
 import { initNav, paintNav } from './nav.js';
 import { initAssistant } from './assistant.js';
-import { home, category, deals } from './views/home.js';
+import { home, category, deals, restocked } from './views/home.js';
 import { browse } from './views/browse.js';
 import { product } from './views/product.js';
 import { saved, searchView, suggest } from './views/misc.js';
@@ -115,6 +115,7 @@ function markNav(parts) {
   if (head === 'category') paintNav({ cat: a });
   else if (head === 'products') paintNav({ cat: META?.subs.get(a)?.cat || null, sub: a });
   else if (head === 'deals') paintNav({ special: 'deals' });
+  else if (head === 'restocked') paintNav({ special: 'restocked' });
   else if (head === 'product') paintNav({ cat: META?.subs.get(a)?.cat || null, sub: a });
   else paintNav({});
 }
@@ -129,6 +130,7 @@ async function route(parts, qs) {
   if (head === 'product' && a) return product(null, a);
   if (head === 'saved') return saved();
   if (head === 'deals') return deals(parseInt(new URLSearchParams(qs).get('page') || '1', 10), navigate);
+  if (head === 'restocked') return restocked(parseInt(new URLSearchParams(qs).get('page') || '1', 10), navigate);
   if (head === 'search') {
     const q = new URLSearchParams(qs);
     const term = q.get('q') || '';
@@ -145,7 +147,7 @@ function titleFor(parts) {
   if (!head || head === 'home') return base;
   if (head === 'category') return `${META?.cats.get(a)?.name || 'Browse'} · ${base}`;
   if (head === 'products') return `${META?.subs.get(a)?.name || 'Products'} · ${base}`;
-  const map = { product: 'Product', saved: 'Saved', deals: 'Deals', search: 'Search' };
+  const map = { product: 'Product', saved: 'Saved', deals: 'Deals', search: 'Search', restocked: 'Back in stock' };
   return `${map[head] || 'Not found'} · ${base}`;
 }
 
@@ -288,6 +290,9 @@ function paintChrome(idx) {
     initNav(META);
     paintChrome(META.idx);
     initAssistant();
+    // Which products came back into stock, so any card can say so. Its own
+    // failure must not take the catalogue down with it, hence the catch.
+    setBackInStock(await data.backInStock().catch(() => new Map()));
   } catch (err) {
     console.error(err);
     main.replaceChildren(emptyState('Prices are not available right now',

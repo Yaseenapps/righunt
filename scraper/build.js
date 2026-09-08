@@ -12,16 +12,17 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { STORES } from './stores.js';
-import { normalize, dedupe } from './lib/normalize.js';
-import { CATEGORIES, SUB_TO_CAT, isHidden } from './lib/taxonomy.js';
+import { normalize, dedupe, skipped, resetSkipped, PRICE_FLOOR } from './lib/normalize.js';
+import { CATEGORIES, SUB_TO_CAT, isHidden, sanitize, extractSpecs } from './lib/taxonomy.js';
 
 import * as shopify from './adapters/shopify.js';
 import * as woocommerce from './adapters/woocommerce.js';
 import * as opencart from './adapters/opencart.js';
 import * as midas from './adapters/midas.js';
 import * as social from './adapters/social.js';
+import * as citycenter from './adapters/citycenter.js';
 
-const ADAPTERS = { shopify, woocommerce, opencart, midas, social };
+const ADAPTERS = { shopify, woocommerce, opencart, midas, social, citycenter };
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DATA = path.join(ROOT, 'data');
@@ -32,6 +33,11 @@ const dry = args.includes('--dry');
 // Regenerate index/search/home/deals from the products already on disk,
 // without touching the network. Use after changing filters or home rows.
 const rebuildOnly = args.includes('--rebuild');
+// Re-judge what is already on disk against the current rules and drop what
+// should never have been listed. Also without touching the network - a
+// product that is not gaming gear does not become one, so there is nothing to
+// re-download. Use after tightening the classifier.
+const cleanOnly = args.includes('--clean');
 
 const log = (m) => process.stdout.write(`${m}\n`);
 
@@ -67,7 +73,89 @@ async function loadExisting() {
   return out;
 }
 
+/**
+ * Re-judge the catalogue already on disk and drop what should not be listed.
+ *
+ * The classifier only ever ran while scraping, so tightening a rule changed
+ * nothing until the next full crawl - half an hour of network for a decision
+ * that needs none. A phone does not stop being a phone between refreshes.
+ *
+ * Deliberately does NOT re-run `classify`. The category a product was filed
+ * in used the shop's own category path, which is not kept on disk; judging
+ * again from the title alone loses that and wrongly deletes real products
+ * (measured: 151 gaming laptops). Specs are re-read and `sanitize` gets the
+ * final say, which can only remove or correct - never invent.
+ */
+async function clean() {
+  const existing = await loadExisting();
+  if (!existing.length) {
+    log('Nothing on disk to clean. Run a scrape first.');
+    process.exit(1);
+  }
+
+  const kept = [];
+  const dropped = [];
+  const moved = [];
+
+  let noPhoto = 0;
+  for (const p of existing) {
+    // A card with no photo is not worth showing. The scrape enforces this too,
+    // but products listed before that rule existed are still on disk.
+    if (!p.image) { noPhoto++; continue; }
+
+    const specs = extractSpecs(p.sub, p.title, p.description || '');
+    let sub = sanitize(p.sub, p.title, specs) || p.sub;
+
+    // Too cheap to be what it claims: a 1 JOD "gaming headset" is a phone
+    // earphone, and a 0.25 JOD "keyboard" is one key switch.
+    const floor = PRICE_FLOOR[sub];
+    if (floor && p.price < floor) sub = 'other';
+
+    if (isHidden(sub)) { dropped.push({ ...p, why: sub }); continue; }
+    if (sub !== p.sub) moved.push({ from: p.sub, to: sub, title: p.title });
+    kept.push({ ...p, sub, cat: SUB_TO_CAT[sub], specs });
+  }
+
+  log(`\n--- cleaning ${existing.length.toLocaleString()} products already on disk ---`);
+
+  const byOldSub = {};
+  for (const d of dropped) byOldSub[d.sub] = (byOldSub[d.sub] || 0) + 1;
+  for (const [sub, n] of Object.entries(byOldSub).sort((a, b) => b[1] - a[1])) {
+    const sample = dropped.filter((d) => d.sub === sub).slice(0, 3);
+    log(`  ${sub.padEnd(18)} -${String(n).padStart(4)}`);
+    for (const s of sample) log(`        ${String(s.price).padStart(7)}  ${s.title.slice(0, 62)}`);
+  }
+  if (moved.length) {
+    log(`\n  ${moved.length} moved to a better category:`);
+    for (const m of moved.slice(0, 10)) log(`        ${m.from} -> ${m.to}  ${m.title.slice(0, 54)}`);
+  }
+
+  if (noPhoto) log(`\n  ${noPhoto} dropped for having no photo`);
+
+  const noWords = kept.filter((p) => !(p.description || '').trim()).length;
+  if (noWords) {
+    log(`  ${noWords.toLocaleString()} have no description yet - the shops publish one, `
+      + 'the next scrape reads it');
+  }
+
+  log(`\n  removed ${(dropped.length + noPhoto).toLocaleString()}, kept ${kept.length.toLocaleString()}`);
+
+  const status = [...new Set(kept.map((p) => p.store))].map((id) => ({
+    store: id,
+    name: STORES.find((s) => s.id === id)?.name || id,
+    ok: true,
+    cleanedFromDisk: true,
+    products: kept.filter((p) => p.store === id).length,
+    seconds: 0,
+  }));
+
+  await write(kept, status);
+  summarise(kept, status);
+}
+
 async function run() {
+  if (cleanOnly) return clean();
+
   if (rebuildOnly) {
     const existing = await loadExisting();
     if (!existing.length) {
@@ -108,6 +196,7 @@ async function run() {
       if (!adapter) throw new Error(`unknown adapter "${store.adapter}"`);
 
       const raw = await adapter.scrape(store, log);
+      resetSkipped();
       const clean = [];
       let dropped = 0;
       for (const r of raw) {
@@ -118,6 +207,26 @@ async function run() {
       const unique = dedupe(clean);
 
       log(`  -> ${unique.length} products (${dropped} skipped, ${clean.length - unique.length} duplicates)`);
+      if (skipped.noImage) log(`     ${skipped.noImage} of those had no photo`);
+
+      // A shop does not lose most of its catalogue overnight. When that
+      // appears to have happened it is almost always us - a paging bug once
+      // cut a shop to ten products and the run reported success. Keep what we
+      // had and say so, rather than publish a gutted catalogue.
+      const had = previous.filter((p) => p.store === store.id).length;
+      if (had > 50 && unique.length < had * 0.5) {
+        log(`  !! ${store.name} returned ${unique.length} products, down from ${had}.`);
+        log(`     That is too big a drop to trust, so the previous catalogue is kept.`);
+        products.push(...previous.filter((p) => p.store === store.id));
+        status.push({
+          store: store.id, name: store.name, ok: false,
+          error: `only ${unique.length} products returned, down from ${had} - kept the previous catalogue`,
+          products: had, keptPrevious: true,
+          seconds: Math.round((Date.now() - started) / 1000),
+        });
+        continue;
+      }
+
       products.push(...unique);
       status.push({
         store: store.id, name: store.name, ok: true,
@@ -277,7 +386,16 @@ async function write(allProducts, status) {
   await writeFile(path.join(DATA, 'builder.json'), JSON.stringify({ builtAt: new Date().toISOString(), products: forBuilder }));
 
   await writeFile(path.join(DATA, 'home.json'), JSON.stringify(buildHome(products)));
-  await writeFile(path.join(DATA, 'history.json'), JSON.stringify(await rollHistory(products)));
+
+  // History is rolled before the restock list, which reads the freshly
+  // stamped `backAt` values out of it.
+  const history = await rollHistory(products);
+  await writeFile(path.join(DATA, 'history.json'), JSON.stringify(history));
+
+  const restocked = buildRestocked(products, history);
+  await writeFile(path.join(DATA, 'restocked.json'), JSON.stringify(restocked));
+  log(`  back in stock in the last ${restocked.days} days: ${restocked.count}`);
+
   await writeFile(path.join(DATA, 'status.json'), JSON.stringify({ builtAt: new Date().toISOString(), stores: status }, null, 2));
 
   log(`\nWrote ${bySub.size} category files to data/`);
@@ -299,10 +417,18 @@ async function rollHistory(products) {
   for (const p of products) {
     const was = previous[p.id];
     if (!was) {
-      next[p.id] = { min: p.price, max: p.price, n: 1, last: p.price, changed: now, first: now };
+      // First sighting. Deliberately NOT recorded as a restock: we have no
+      // idea whether it was out of stock before we ever looked.
+      next[p.id] = {
+        min: p.price, max: p.price, n: 1, last: p.price, changed: now, first: now,
+        stock: !!p.inStock, stockSince: now,
+      };
       continue;
     }
     const moved = was.last !== p.price;
+    const cameBack = was.stock === false && p.inStock === true;
+    const wentAway = was.stock === true && p.inStock === false;
+
     next[p.id] = {
       min: Math.min(was.min ?? p.price, p.price),
       max: Math.max(was.max ?? p.price, p.price),
@@ -311,13 +437,48 @@ async function rollHistory(products) {
       changed: moved ? now : (was.changed || now),
       first: was.first || now,
       ...(moved ? { prev: was.last } : (was.prev !== undefined ? { prev: was.prev } : {})),
+
+      // Stock, tracked the same way: the state now, when it last changed,
+      // and when it most recently came back. `backAt` is what the site reads
+      // to answer "what returned this week?".
+      stock: !!p.inStock,
+      stockSince: (cameBack || wentAway) ? now : (was.stockSince || now),
+      ...(cameBack ? { backAt: now } : (was.backAt ? { backAt: was.backAt } : {})),
     };
   }
 
   const tracked = Object.keys(next).length;
   const drops = Object.values(next).filter((h) => h.prev !== undefined && h.last < h.prev).length;
+  const back = products.filter((p) => previous[p.id]?.stock === false && p.inStock).length;
+  const gone = products.filter((p) => previous[p.id]?.stock === true && !p.inStock).length;
   log(`  price history: ${tracked.toLocaleString()} products tracked, ${drops} cheaper than last check`);
+  log(`  stock: ${back} came back in stock, ${gone} sold out since last check`);
   return next;
+}
+
+/**
+ * The products that have come back into stock recently, newest first.
+ *
+ * A shop putting something back on the shelf is the one event a price
+ * comparison site can spot and a shopper cannot - nobody refreshes eight
+ * shops every six hours to see whether the card they want reappeared. So it
+ * gets its own page rather than being left for someone to stumble across.
+ */
+function buildRestocked(products, history, days = 14) {
+  const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+  const rows = [];
+
+  for (const p of products) {
+    if (!p.inStock) continue;
+    const h = history[p.id];
+    if (!h?.backAt) continue;
+    const at = Date.parse(h.backAt);
+    if (!Number.isFinite(at) || at < cutoff) continue;
+    rows.push({ ...card(p), backAt: h.backAt });
+  }
+
+  rows.sort((a, b) => Date.parse(b.backAt) - Date.parse(a.backAt) || b.price - a.price);
+  return { builtAt: new Date().toISOString(), days, count: rows.length, items: rows.slice(0, 600) };
 }
 
 /**
