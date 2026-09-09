@@ -20,9 +20,10 @@ concurrency:
 jobs:
   scrape:
     runs-on: ubuntu-latest
-    # City Center publishes no bulk catalogue, so it is read one product page
-    # at a time - about 15 minutes on its own, on top of the other 8 shops.
-    timeout-minutes: 90
+    # Nine shops, and City Center publishes no bulk catalogue so it is read
+    # one product page at a time - close to ten thousand of them. At 90
+    # minutes every run was being killed mid-scrape.
+    timeout-minutes: 330
     steps:
       - uses: actions/checkout@v4
 
@@ -33,11 +34,38 @@ jobs:
 
       - run: npm ci --no-audit --no-fund
 
+      # City Center's crawler writes down where it got to, so an interrupted
+      # read resumes instead of starting again from the first page. That
+      # progress lives in .cache, which a fresh runner does not have - so it
+      # is carried between runs here.
+      - name: Restore crawl progress
+        uses: actions/cache@v4
+        with:
+          path: .cache
+          key: crawl-${{ github.run_id }}
+          restore-keys: crawl-
+
+      # The site must publish whether or not this finishes.
+      #
+      # Every run for the past day hit the job's time limit here and was
+      # cancelled, which skipped every step below - so a finished catalogue
+      # sat in the repository for a day without ever reaching the site. A
+      # scrape that runs out of time should cost us fresh prices, nothing
+      # more: the data already committed is still good, and publishing it is
+      # still worth doing.
+      #
+      # Nothing half-written can leak out. The build writes its files only
+      # after every shop has been read, so an interrupted scrape leaves the
+      # committed data untouched, and check-site.mjs below refuses to publish
+      # a catalogue that does not hang together.
       - name: Scrape every store
+        continue-on-error: true
+        timeout-minutes: 240
         run: npm run scrape
 
       - name: Show what changed
-        run: cat data/status.json
+        if: always()
+        run: cat data/status.json || true
 
       - name: Commit refreshed data
         run: |
