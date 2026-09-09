@@ -1,0 +1,79 @@
+name: Publish the site
+
+# Publishing is kept apart from scraping on purpose.
+#
+# They used to be one job: scrape, then deploy. That meant a scrape which ran
+# long took the deploy down with it - and for a whole day it did, cancelling
+# at the time limit and skipping every publish step, so a finished catalogue
+# sat in the repository without ever reaching the site.
+#
+# Now the site republishes within a minute of anything landing on main, and a
+# slow or failed scrape cannot stop it. The worst a bad scrape can do is leave
+# yesterday's prices up.
+
+on:
+  # Any change to the site or its data.
+  push:
+    branches: [main]
+  # A commit made by the scraper does not trigger `push` - GitHub deliberately
+  # does not let a workflow's own commits start another workflow, or they
+  # would loop. So the scrape is followed here instead.
+  workflow_run:
+    workflows: ['Refresh prices']
+    types: [completed]
+  # And a button, for publishing on demand.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deployment at a time. Never cancel one half way: an interrupted deploy
+# is how a site ends up serving a mixture of two versions.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      # Always the current state of main. When this runs after the scraper,
+      # the default checkout would be the commit that STARTED it - which is
+      # the one before the fresh prices were committed.
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Only the site itself is published. Uploading the whole checkout would
+      # pack the scraper and node_modules into every deploy - the upload
+      # action excludes only .git and .github on its own.
+      - name: Assemble the site
+        run: |
+          mkdir -p _site
+          cp -r index.html assets data .nojekyll _site/
+          # A real path like /products/gpu is served this file. It is the app
+          # shell too, but NOT a copy of index.html: it has to load its
+          # assets from the site root, because it is served from addresses
+          # several levels deep. See the comment inside it.
+          cp 404.html _site/404.html
+
+      # Nothing broken gets published, whatever went wrong before this point.
+      # If a data file will not parse, the catalogue does not load, search
+      # returns nothing and every product link says "not found". A run that
+      # would do that must fail loudly and leave the last good site up.
+      - name: Refuse to publish a broken site
+        run: node scripts/check-site.mjs _site
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4

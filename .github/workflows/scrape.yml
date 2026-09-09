@@ -1,17 +1,17 @@
-name: Refresh prices and deploy
+name: Refresh prices
+
+# Reads all nine shops and commits what changed. Publishing is a separate
+# workflow (publish.yml) that follows this one - so however long this takes,
+# or however badly it goes, the site still goes up.
 
 on:
   schedule:
     # Every 6 hours. GitHub runs cron in UTC.
     - cron: '15 */6 * * *'
   workflow_dispatch:
-  push:
-    branches: [main]
 
 permissions:
   contents: write
-  pages: write
-  id-token: write
 
 concurrency:
   group: refresh
@@ -77,17 +77,14 @@ jobs:
           else
             git commit -m "data: refresh prices $(date -u '+%Y-%m-%d %H:%M UTC')"
             # Someone may have pushed while this run was scraping. Replay our
-            # data commit on top of theirs instead of failing the whole job -
-            # and if the push still cannot go through, say so but carry on to
-            # the deploy, because a stale commit is no reason to leave the
-            # live site un-updated.
+            # data commit on top of theirs rather than failing the whole job.
             #
             # The abort is the important part. A failed `pull --rebase` stops
-            # MID-REBASE, leaving conflict markers in data/ - and the deploy
-            # step below copies data/ straight into the published site. That
-            # is exactly how "<<<<<<< HEAD" reached the live search index and
-            # broke every product link on the site. Aborting puts the tree
-            # back to this run's own scrape, which is complete and valid.
+            # MID-REBASE, leaving conflict markers in data/ - and those files
+            # are what gets published. That is exactly how "<<<<<<< HEAD"
+            # reached the live search index and broke every product link on
+            # the site. Aborting puts the tree back to this run's own scrape,
+            # which is complete and valid.
             for attempt in 1 2 3; do
               if git pull --rebase --autostash origin main && git push; then
                 exit 0
@@ -97,33 +94,5 @@ jobs:
               echo "push attempt $attempt did not go through; retrying"
               sleep 5
             done
-            echo "::warning::Could not save refreshed prices to the repo. Deploying this run's own data instead."
+            echo "::warning::Could not save refreshed prices. The site keeps the prices it already has."
           fi
-
-      # Only the site itself gets deployed. Uploading the whole checkout would
-      # pack node_modules and the scraper source into every deploy - the
-      # upload action only excludes .git and .github on its own.
-      - name: Assemble the site
-        run: |
-          mkdir -p _site
-          cp -r index.html assets data .nojekyll _site/
-          # GitHub Pages serves 404.html for real paths like /products/gpu.
-          # It is the app shell too, but NOT a copy of index.html: it has to
-          # load its assets from the site root, because it is served from
-          # addresses several levels deep. See the comment inside it.
-          cp 404.html _site/404.html
-
-      # Nothing broken gets published, whatever went wrong before this point.
-      # The site is only as good as its data files: if one of them will not
-      # parse, the catalogue does not load, search returns nothing and every
-      # product link says "not found". A run that would do that must fail
-      # loudly and leave the last good site up instead.
-      - name: Refuse to publish a broken site
-        run: node scripts/check-site.mjs _site
-
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: _site
-      - id: deployment
-        uses: actions/deploy-pages@v4
