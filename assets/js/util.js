@@ -8,8 +8,21 @@
  */
 export const BASE = new URL('../../', import.meta.url).pathname;
 
-/** Build a site URL: href('products/gpu') -> "/righunt/products/gpu". */
-export const href = (path = '') => BASE + String(path).replace(/^\/+/, '');
+/**
+ * Build a site URL: href('products/gpu') -> "/righunt/products/gpu".
+ *
+ * Applying it twice must not double the base. The navigation is built with
+ * href() and then the shell's static links are fixed up with it again, which
+ * turned every category link into /righunt/righunt/category/... on the live
+ * site. It never showed up in development because the base there is "/", and
+ * "/" + "home" is still "/home" - the bug only appears once the site is
+ * mounted under a folder.
+ */
+export function href(path = '') {
+  const p = String(path);
+  if (BASE !== '/' && p.startsWith(BASE)) return p;
+  return BASE + p.replace(/^\/+/, '');
+}
 
 /** The part of the current URL that names the page, with no base or query. */
 export function currentPath() {
