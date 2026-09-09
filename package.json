@@ -6,7 +6,6 @@
   "description": "Price comparison for PC components and gaming gear sold in Jordan",
   "scripts": {
     "scrape": "node --max-old-space-size=6144 scraper/build.js",
-    "build": "node scripts/build-site.mjs",
     "dev": "node scripts/serve.js",
     "clean": "node scraper/build.js --clean"
   },

@@ -75,11 +75,15 @@ jobs:
       # Only the site itself gets deployed. Uploading the whole checkout would
       # pack node_modules and the scraper source into every deploy - the
       # upload action only excludes .git and .github on its own.
-      #
-      # The same script Cloudflare Pages runs, so the two hosts cannot drift
-      # apart: whatever is tested locally is what both of them publish.
       - name: Assemble the site
-        run: npm run build
+        run: |
+          mkdir -p _site
+          cp -r index.html assets data .nojekyll _site/
+          # GitHub Pages serves 404.html for real paths like /products/gpu.
+          # It is the app shell too, but NOT a copy of index.html: it has to
+          # load its assets from the site root, because it is served from
+          # addresses several levels deep. See the comment inside it.
+          cp 404.html _site/404.html
 
       # Nothing broken gets published, whatever went wrong before this point.
       # The site is only as good as its data files: if one of them will not
