@@ -29,6 +29,23 @@ async function load(path) {
   return p;
 }
 
+/**
+ * Forget everything fetched so far, so the next read comes from the server.
+ *
+ * Each file is fetched once and kept for the session, which is right almost
+ * always - the catalogue does not change while someone is browsing it. But
+ * the prices refresh four times a day, and a tab left open across one of
+ * those is holding a catalogue that no longer exists: click a product and it
+ * cannot be found, because the ids moved underneath it. Rather than leave
+ * someone to work out that they should reload the page, throw the old copy
+ * away and read it again.
+ */
+export function forget() {
+  cache.clear();
+  inflight.clear();
+  backSet = null;
+}
+
 export const index = () => load('data/index.json');
 export const home = () => load('data/home.json');
 export const deals = () => load('data/deals.json');
@@ -81,6 +98,18 @@ export async function meta() {
  * index to discover which file holds it.
  */
 export async function product(subId, productId) {
+  const found = await findProduct(subId, productId);
+  if (found) return found;
+
+  // Nothing matched. Before giving up, consider that this tab may simply be
+  // holding a catalogue from before the last price refresh - which is the
+  // usual reason a product "does not exist" while it plainly does. Read
+  // everything again and look once more.
+  forget();
+  return findProduct(subId, productId);
+}
+
+async function findProduct(subId, productId) {
   if (subId) {
     try {
       const list = await sub(subId);

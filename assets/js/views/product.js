@@ -6,8 +6,12 @@ import { crumbs, emptyState, storeOf, section, rail, isBackInStock } from '../co
 export async function product(subId, productId) {
   const p = await data.product(subId, productId);
   if (!p) {
+    // The catalogue has already been re-read once by this point, so a
+    // stale tab is not the explanation - but say it anyway, because
+    // refreshing is the one thing a visitor can actually try.
     return emptyState('Product not found',
-      'This listing may have been removed by the store since our last update.',
+      'The store may have removed this listing since our last update. '
+      + 'If you followed a link from this site, try refreshing the page.',
       { href: href('home'), text: 'Back home' });
   }
 
