@@ -77,8 +77,24 @@ function parseConstraints(text) {
   if (/\bmechanical\b/.test(t)) c.switchType = 'Mechanical';
   const w = t.match(/\b(\d{3,4})\s*w(att)?\b/);
   if (w) c.wattage = parseInt(w[1], 10);
-  const chip = t.match(/\b(rtx|gtx)\s*(\d{3,4})\s*(ti\s*super|super|ti)?\b/);
-  if (chip) c.chipset = `${chip[1].toUpperCase()} ${chip[2]}${chip[3] ? ` ${chip[3].toUpperCase()}` : ''}`.trim();
+  const chip = t.match(/\b(rtx|gtx|rx)\s*(\d{3,4})\s*(xt\s*x|ti\s*super|super|ti|xt|gre)?\b/);
+  if (chip) {
+    const maker = chip[1].toUpperCase();
+    c.chipset = `${maker} ${chip[2]}${chip[3] ? ` ${chip[3].toUpperCase()}` : ''}`.replace(/\s+/g, ' ').trim();
+  } else {
+    // People name a card by its number alone - "build the best 9070 pc",
+    // "is a 5050 enough". Kept as a hint rather than a chipset because a
+    // bare number could equally be money; buildPC only believes it if a card
+    // with that number is actually in the catalogue, and it ignores anything
+    // written as an amount.
+    const bare = t.match(/\b(\d{4})\b(?!\s*(jd|jod|dinars?|د\.?ا|mhz|mt\/?s|w\b))/);
+    // "for 2000" is money, "the best 9070" is a card. The words immediately
+    // in front decide it.
+    const before = bare ? t.slice(Math.max(0, bare.index - 14), bare.index) : '';
+    if (bare && !/\b(under|below|max|up to|budget(\s+of)?|for|around|about|~)\s*$/.test(before)) {
+      c.gpuHint = bare[1];
+    }
+  }
   return c;
 }
 
@@ -403,6 +419,64 @@ function pickPlatform(products, ceiling) {
  * Returns either a build or an honest explanation of why not.
  */
 /**
+ * The card the question asked for, if the catalogue has one.
+ *
+ * "RTX 5070", "rx 9070 xt" and a bare "9070" all arrive here. The bare number
+ * is only believed when a real card carries it - which is what stops a price
+ * being mistaken for a model.
+ */
+function requestedGpu(products, constraints = {}) {
+  const asked = String(constraints.chipset || constraints.gpuHint || '').trim();
+  if (!asked) return null;
+
+  const digits = asked.match(/\d{3,4}/)?.[0];
+  if (!digits) return null;
+  const suffix = asked.replace(/.*\d{3,4}\s*/, '').trim().toUpperCase();
+
+  const cards = products.filter((p) => {
+    if (p.sub !== 'gpu') return false;
+    const chip = String(p.specs?.chipset || '').toUpperCase();
+    if (!chip.includes(digits)) return false;
+    // "5070" must not answer with a 5070 Ti unless a Ti was asked for, but
+    // "5070 ti" must not answer with a plain 5070 either.
+    const chipSuffix = chip.replace(/.*\d{3,4}\s*/, '').trim();
+    return suffix ? chipSuffix.includes(suffix) : chipSuffix === '';
+  });
+  if (!cards.length) return null;
+
+  // Best of the matching cards rather than the cheapest: they asked for this
+  // chip, so the question is which board partner's version to buy.
+  return rank(cards, Math.max(...cards.map((c) => c.price)), 'gpu')[0] || null;
+}
+
+/**
+ * What a machine built around this card should cost.
+ *
+ * The card is the biggest line in a gaming build, so a share of the budget is
+ * the obvious estimate - but it is wrong at the cheap end. A 279 JOD card
+ * priced at 42% gives a 664 JOD budget, and the rest of a machine cannot
+ * actually be bought for the 385 that leaves: the memory gets squeezed down
+ * to 8GB to make it fit, which is not a machine worth recommending.
+ *
+ * So take whichever is larger - the share, or what the other parts genuinely
+ * cost at their cheapest with memory held at 16GB - and leave a tenth for the
+ * build not to be scraping the bottom of every category.
+ */
+function budgetAround(products, card) {
+  const cheapest = (sub, extra = () => true) => {
+    const list = products.filter((p) => p.sub === sub && extra(p));
+    return list.length ? Math.min(...list.map((p) => p.price)) : 0;
+  };
+
+  const rest = cheapest('cpu') + cheapest('motherboard')
+    + cheapest('ram', (p) => (p.specs?.capacity || 0) >= 16 && isDesktopRam(p))
+    + cheapest('psu') + cheapest('case') + cheapest('storage') + cheapest('cooling');
+
+  const byShare = card.price / (SPLIT.find(([s]) => s === 'gpu')?.[1] || 0.42);
+  return Math.round(Math.max(byShare, (card.price + rest) * 1.1));
+}
+
+/**
  * Put a whole machine together inside a budget.
  *
  * `withMonitor` adds a screen to the build. Asking for "a PC for 1700 with
@@ -410,11 +484,20 @@ function pickPlatform(products, ceiling) {
  * the question that was asked, so the screen takes its own slice of the money
  * rather than being quietly dropped.
  */
-export function buildPC(products, budget, { withMonitor = false } = {}) {
+export function buildPC(products, budget, { withMonitor = false, constraints = {} } = {}) {
   const floor = floorPrice(products);
+
+  // Someone naming the card they want has told us plenty: "build the best
+  // 9070 pc" does not need a budget, because the card sets the budget. Asking
+  // for one back is a worse answer than building the machine they described.
+  const wanted = requestedGpu(products, constraints);
+  let derivedBudget = false;
   if (!Number.isFinite(budget) || budget <= 0) {
-    return { ok: false, reason: 'no-budget', floor };
+    if (!wanted) return { ok: false, reason: 'no-budget', floor };
+    budget = budgetAround(products, wanted);
+    derivedBudget = true;
   }
+
   if (budget < floor.total) {
     return { ok: false, reason: 'too-low', floor, budget };
   }
@@ -455,7 +538,11 @@ export function buildPC(products, budget, { withMonitor = false } = {}) {
   // Read from SPLIT rather than repeating the number, so the share is stated
   // in exactly one place.
   const shareOf = (sub) => SPLIT.find(([s]) => s === sub)?.[1] || 0.1;
-  chosen.gpu = rank(products.filter((p) => p.sub === 'gpu'), forParts * shareOf('gpu'), 'gpu')[0]
+  // A card the question named is the point of the build, so it is not up for
+  // reconsideration: neither the trim loop nor the upgrade pass may replace
+  // it. Everything else bends around it.
+  chosen.gpu = wanted
+    || rank(products.filter((p) => p.sub === 'gpu'), forParts * shareOf('gpu'), 'gpu')[0]
     || cheapestOf('gpu');
 
   // The supply is sized for the card that was actually chosen.
@@ -483,18 +570,28 @@ export function buildPC(products, budget, { withMonitor = false } = {}) {
 
     const over = total - budget;
     const swappable = Object.entries(chosen)
-      .filter(([, p]) => p)
+      .filter(([sub, p]) => p && !(wanted && sub === 'gpu'))
       .sort((a, b) => b[1].price - a[1].price);
 
     let swapped = false;
-    for (const [sub, current] of swappable) {
-      const fits = constraintFor[sub] || (() => true);
-      const cheaper = products
-        .filter((p) => p.sub === sub && p.price < current.price && fits(p))
-        .sort((a, b) => b.price - a.price);
-      // Prefer the smallest cut that closes the gap, else the next step down.
-      const target = cheaper.find((p) => current.price - p.price >= over) || cheaper[0];
-      if (target) { chosen[sub] = target; swapped = true; break; }
+    // Two passes. The first refuses to take memory below 16GB, because it is
+    // usually the dearest part left once the graphics card is spoken for, and
+    // trimming it first is how a machine built around a named card ended up
+    // with 8GB while its case and cooler went untouched. Only if nothing else
+    // will give way does the second pass allow it.
+    for (const lastResort of [false, true]) {
+      for (const [sub, current] of swappable) {
+        const fits = constraintFor[sub] || (() => true);
+        let cheaper = products.filter((p) => p.sub === sub && p.price < current.price && fits(p));
+        if (sub === 'ram' && !lastResort && (current.specs?.capacity || 0) >= 16) {
+          cheaper = cheaper.filter((p) => (p.specs?.capacity || 0) >= 16);
+        }
+        cheaper.sort((a, b) => b.price - a.price);
+        // Prefer the smallest cut that closes the gap, else the next step down.
+        const target = cheaper.find((p) => current.price - p.price >= over) || cheaper[0];
+        if (target) { chosen[sub] = target; swapped = true; break; }
+      }
+      if (swapped) break;
     }
     if (!swapped) break;
   }
@@ -527,6 +624,7 @@ export function buildPC(products, budget, { withMonitor = false } = {}) {
     for (const sub of UPGRADE_ORDER) {
       const current = chosen[sub];
       if (!current) continue;
+      if (wanted && sub === 'gpu') continue;   // they chose this card
       const fits = constraintFor[sub] || (() => true);
       const now = capability(sub, current);
 
@@ -572,6 +670,9 @@ export function buildPC(products, budget, { withMonitor = false } = {}) {
     parts,
     total,
     budget,
+    // True when no budget was given and this one was worked out from the card
+    // they named - so the answer does not call it "your" budget.
+    derivedBudget,
     leftover: budget - total,
     overBudget: total > budget,
     problems: checkCompatibility(chosen),

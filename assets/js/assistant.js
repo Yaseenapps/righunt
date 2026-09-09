@@ -72,8 +72,14 @@ function buildAnswer(result) {
     ];
   }
 
+  // "leaving 53 JOD of your 1,831" is only true if they named a budget. When
+  // the build was sized around a card they asked for, the figure is ours, and
+  // saying "your" would be putting words in their mouth.
+  const card = result.parts.find((p) => p.sub === 'gpu')?.product;
   const nodes = [
-    say(`Here is a build at ${money(result.total)} JOD${result.leftover > 5 ? `, leaving ${money(result.leftover)} JOD of your ${money(result.budget)}` : ''}.`),
+    say(result.derivedBudget
+      ? `Here is a machine built around the ${card?.specs?.chipset || 'card'} you asked for, at ${money(result.total)} JOD.`
+      : `Here is a build at ${money(result.total)} JOD${result.leftover > 5 ? `, leaving ${money(result.leftover)} JOD of your ${money(result.budget)}` : ''}.`),
   ];
 
   nodes.push(el('div', { class: 'as-build' },
@@ -200,7 +206,7 @@ async function answer(text, feed) {
   let nodes;
 
   if (q.intent === 'build') {
-    nodes = buildAnswer(buildPC(products, q.budget, { withMonitor: q.withMonitor }));
+    nodes = buildAnswer(buildPC(products, q.budget, { withMonitor: q.withMonitor, constraints: q.constraints }));
   } else if (q.intent === 'pick' && q.category) {
     nodes = pickAnswer(q, pick(products, q.category, {
       budget: q.budget ?? Infinity, constraints: q.constraints, limit: 3,

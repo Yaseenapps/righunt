@@ -148,6 +148,48 @@ function gpuBand(p) {
   return 1;
 }
 
+/* --------------------------------------------------------------------------
+ * Naming a card is enough on its own.
+ *
+ * "build the best 9070 pc" used to be answered with "tell me a budget",
+ * which is a worse reply than the machine they just described. The card is
+ * the biggest line in a gaming build, so it sets the budget.
+ * ----------------------------------------------------------------------- */
+console.log('\n--- a named card builds a machine around itself ---');
+
+for (const [ask, wantChip] of [
+  ['build the best 9070 pc', 'RX 9070'],
+  ['build me a pc with a 5050', 'RTX 5050'],
+  ['build me a gaming pc with rtx 5070 ti', 'RTX 5070 TI'],
+  ['build me a pc with rx 9070 xt', 'RX 9070 XT'],
+]) {
+  const q = parseQuestion(ask);
+  const b = buildPC(products, q.budget, { withMonitor: q.withMonitor, constraints: q.constraints });
+  const chip = String(b.parts?.find((x) => x.sub === 'gpu')?.product?.specs?.chipset || '').toUpperCase();
+  ok(b.ok, `"${ask}": builds without being given a budget`);
+  ok(chip === wantChip, `"${ask}": uses a ${wantChip} (got ${chip || 'nothing'})`);
+  if (b.ok) {
+    ok(!b.problems?.length, `"${ask}": the parts fit together`);
+    ok((b.parts.find((x) => x.sub === 'ram')?.product?.specs?.capacity || 0) >= 16,
+      `"${ask}": still 16GB of memory or more`);
+  }
+}
+
+// A model that does not exist must not be invented around.
+const nonsense = parseQuestion('build the best 9999 pc');
+ok(!buildPC(products, nonsense.budget, { constraints: nonsense.constraints }).ok,
+  'a card that does not exist still asks for a budget rather than guessing');
+
+// And an amount must never be read as a model number.
+for (const [ask, hint] of [
+  ['build me a pc for 2000', null],
+  ['build me a gaming pc under 1500', null],
+  ['build the best 9070 pc', '9070'],
+]) {
+  const got = parseQuestion(ask).constraints.gpuHint || null;
+  ok(got === hint, `"${ask}": reads ${hint ? `${hint} as a card` : 'the number as money'}`);
+}
+
 console.log('\n--- asking for a monitor gets a monitor ---');
 const q = parseQuestion('build me a pc for 1700jds with the monitor');
 ok(q.withMonitor === true, 'the question is read as wanting a screen');
