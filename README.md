@@ -224,7 +224,28 @@ and the theme. Everything writes immediately — nothing to submit or confirm.
 
 ---
 
-## Publishing it (free, refreshes itself)
+## Hosting
+
+The site is static, so any static host will serve it. It currently runs on
+Vercel, connected to this repository: every push redeploys, and the scraper's
+own price commits redeploy it too.
+
+`vercel.json` does two things, and the reasoning is worth keeping because JSON
+cannot carry a comment:
+
+- **The rewrite.** Every page except the front one - `/products/gpu`,
+  `/product/gpu/igeek-abc`, `/saved` - is a route the app handles, not a file
+  on disk. Without the rewrite the host answers **404** for all of them: the
+  page still works, because the app shell is what gets served, but a 404 is
+  what search engines record, and a site meant to be found on Google cannot
+  have every page marked missing. The rewrite points them at `404.html` rather
+  than `index.html` on purpose - see the comment inside that file - and Vercel
+  checks real files first, so `/data/*.json` and `/assets/*` are unaffected.
+- **The cache headers.** Prices change four times a day and the code rarely
+  does, so data is revalidated every five minutes while assets are held for an
+  hour.
+
+## Publishing it on GitHub Pages instead
 
 Order matters: the two repository settings in steps 5 and 6 have to be in place
 before a workflow run can finish. The run that fires automatically on your first
