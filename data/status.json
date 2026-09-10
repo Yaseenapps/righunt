@@ -1,77 +1,79 @@
 {
-  "builtAt": "2026-09-10T17:12:12.488Z",
+  "builtAt": "2026-09-10T19:33:46.605Z",
   "stores": [
-    {
-      "store": "compujordan",
-      "name": "Compu Jordan",
-      "ok": true,
-      "cleanedFromDisk": true,
-      "products": 1511,
-      "seconds": 0
-    },
-    {
-      "store": "orientalstore",
-      "name": "Oriental Store",
-      "ok": true,
-      "cleanedFromDisk": true,
-      "products": 3683,
-      "seconds": 0
-    },
-    {
-      "store": "citycenter",
-      "name": "City Center Computers",
-      "ok": true,
-      "cleanedFromDisk": true,
-      "products": 4103,
-      "seconds": 0
-    },
     {
       "store": "igeek",
       "name": "iGeek Megastore",
       "ok": true,
-      "cleanedFromDisk": true,
-      "products": 2921,
-      "seconds": 0
-    },
-    {
-      "store": "numberone",
-      "name": "Number One Store",
-      "ok": true,
-      "cleanedFromDisk": true,
-      "products": 1319,
-      "seconds": 0
-    },
-    {
-      "store": "whiteangel",
-      "name": "White Angel",
-      "ok": true,
-      "cleanedFromDisk": true,
-      "products": 418,
-      "seconds": 0
-    },
-    {
-      "store": "pccircle",
-      "name": "PC Circle",
-      "ok": true,
-      "cleanedFromDisk": true,
-      "products": 1319,
-      "seconds": 0
-    },
-    {
-      "store": "midas",
-      "name": "Midas Computer Center",
-      "ok": true,
-      "cleanedFromDisk": true,
-      "products": 642,
-      "seconds": 0
+      "products": 4992,
+      "seconds": 170
     },
     {
       "store": "gameon",
       "name": "GameOn JO",
       "ok": true,
-      "cleanedFromDisk": true,
-      "products": 1601,
+      "products": 2487,
+      "seconds": 68
+    },
+    {
+      "store": "pccircle",
+      "name": "PC Circle",
+      "ok": true,
+      "products": 4056,
+      "seconds": 996
+    },
+    {
+      "store": "compujordan",
+      "name": "Compu Jordan",
+      "ok": true,
+      "products": 3159,
+      "seconds": 218
+    },
+    {
+      "store": "citycenter",
+      "name": "City Center Computers",
+      "ok": true,
+      "products": 9068,
+      "seconds": 119
+    },
+    {
+      "store": "orientalstore",
+      "name": "Oriental Store",
+      "ok": true,
+      "products": 5481,
+      "seconds": 987
+    },
+    {
+      "store": "social",
+      "name": "Instagram & Facebook sellers",
+      "ok": true,
+      "products": 0,
       "seconds": 0
+    },
+    {
+      "store": "whiteangel",
+      "name": "White Angel",
+      "ok": false,
+      "error": "HTTP 403 - the store is refusing automated requests",
+      "products": 418,
+      "keptPrevious": true,
+      "seconds": 1
+    },
+    {
+      "store": "numberone",
+      "name": "Number One Store",
+      "ok": true,
+      "products": 1966,
+      "seconds": 1434
+    },
+    {
+      "store": "midas",
+      "name": "Midas Computer Center",
+      "ok": false,
+      "error": "no products could be read from this store",
+      "products": 642,
+      "keptPrevious": true,
+      "seconds": 2
     }
   ]
 }
