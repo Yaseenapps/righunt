@@ -1,79 +1,77 @@
 {
-  "builtAt": "2026-09-10T13:38:35.023Z",
+  "builtAt": "2026-09-10T17:12:12.488Z",
   "stores": [
-    {
-      "store": "igeek",
-      "name": "iGeek Megastore",
-      "ok": true,
-      "products": 4985,
-      "seconds": 170
-    },
-    {
-      "store": "gameon",
-      "name": "GameOn JO",
-      "ok": true,
-      "products": 2487,
-      "seconds": 50
-    },
-    {
-      "store": "pccircle",
-      "name": "PC Circle",
-      "ok": true,
-      "products": 4050,
-      "seconds": 996
-    },
     {
       "store": "compujordan",
       "name": "Compu Jordan",
       "ok": true,
-      "products": 3159,
-      "seconds": 219
-    },
-    {
-      "store": "citycenter",
-      "name": "City Center Computers",
-      "ok": true,
-      "products": 9068,
-      "seconds": 119
+      "cleanedFromDisk": true,
+      "products": 1511,
+      "seconds": 0
     },
     {
       "store": "orientalstore",
       "name": "Oriental Store",
       "ok": true,
-      "products": 5481,
-      "seconds": 999
-    },
-    {
-      "store": "social",
-      "name": "Instagram & Facebook sellers",
-      "ok": true,
-      "products": 0,
+      "cleanedFromDisk": true,
+      "products": 3683,
       "seconds": 0
     },
     {
-      "store": "whiteangel",
-      "name": "White Angel",
-      "ok": false,
-      "error": "HTTP 403 - the store is refusing automated requests",
-      "products": 418,
-      "keptPrevious": true,
-      "seconds": 1
+      "store": "citycenter",
+      "name": "City Center Computers",
+      "ok": true,
+      "cleanedFromDisk": true,
+      "products": 4103,
+      "seconds": 0
+    },
+    {
+      "store": "igeek",
+      "name": "iGeek Megastore",
+      "ok": true,
+      "cleanedFromDisk": true,
+      "products": 2921,
+      "seconds": 0
     },
     {
       "store": "numberone",
       "name": "Number One Store",
       "ok": true,
-      "products": 1965,
-      "seconds": 1434
+      "cleanedFromDisk": true,
+      "products": 1319,
+      "seconds": 0
+    },
+    {
+      "store": "whiteangel",
+      "name": "White Angel",
+      "ok": true,
+      "cleanedFromDisk": true,
+      "products": 418,
+      "seconds": 0
+    },
+    {
+      "store": "pccircle",
+      "name": "PC Circle",
+      "ok": true,
+      "cleanedFromDisk": true,
+      "products": 1319,
+      "seconds": 0
     },
     {
       "store": "midas",
       "name": "Midas Computer Center",
-      "ok": false,
-      "error": "no products could be read from this store",
+      "ok": true,
+      "cleanedFromDisk": true,
       "products": 642,
-      "keptPrevious": true,
-      "seconds": 2
+      "seconds": 0
+    },
+    {
+      "store": "gameon",
+      "name": "GameOn JO",
+      "ok": true,
+      "cleanedFromDisk": true,
+      "products": 1601,
+      "seconds": 0
     }
   ]
 }

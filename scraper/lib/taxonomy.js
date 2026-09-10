@@ -876,6 +876,10 @@ export function sanitize(sub, title, specs) {
       if (/\bthumb\s*sticks?\b|\b\w*grips?\b|\bkontrolfreek\b/i.test(t)) return 'other';
       // A Mario figure is a toy, not a game.
       if (/\bfigures?\b|\bfigurines?\b|\bamiibo\b|\bstatues?\b|\bplush\b|\bkeychains?\b/i.test(t)) return 'other';
+      // Merchandise carries the game's name without being it: "Razer Call of
+      // Duty: Black Ops III Goliathus Speed" is a mouse mat.
+      if (/\bgoliathus\b|\bmouse\s*(pad|mat)\b|\bdesk\s*mat\b/i.test(t)) return 'mousepad';
+      if (/\bhead\s*(set|phone)s?\b|\bkeyboards?\b|\bmouse\b|\bcontrollers?\b/i.test(t)) return 'other';
       return sub;
     // Card readers and the pouches a drive travels in are not storage.
     case 'external-storage':
