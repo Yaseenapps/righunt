@@ -1,8 +1,11 @@
 name: Refresh prices
 
-# Reads all nine shops and commits what changed. Publishing is a separate
-# workflow (publish.yml) that follows this one - so however long this takes,
-# or however badly it goes, the site still goes up.
+# Reads all nine shops and commits what changed. That is all it does.
+#
+# Publishing is not its job: the site is hosted on Vercel, which redeploys
+# whatever lands on main - including this workflow's own price commits. So a
+# scrape that runs long, or fails outright, cannot take the site down with
+# it. The worst it can do is leave yesterday's prices up.
 
 on:
   schedule:
@@ -66,6 +69,17 @@ jobs:
       - name: Show what changed
         if: always()
         run: cat data/status.json || true
+
+      # Checked BEFORE the data is committed, not after it is published.
+      #
+      # The host redeploys whatever lands on main, so this is the last point
+      # at which a bad scrape can be stopped. If the catalogue does not hang
+      # together - a file that will not parse, a product that is searchable
+      # but exists in no category, a price nobody would pay - the run fails
+      # here, nothing is committed, and the site simply keeps the prices it
+      # already had. Stale is survivable; broken is not.
+      - name: Refuse to commit a broken catalogue
+        run: node scripts/check-site.mjs .
 
       - name: Commit refreshed data
         run: |
