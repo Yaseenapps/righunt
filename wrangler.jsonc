@@ -1,5 +1,10 @@
-// Cloudflare deploy settings. The build command copies the site into public/
-// (index.html, _headers, assets, data) and this uploads exactly that folder.
+// Cloudflare deploy settings.
+//
+// The build command copies the site - index.html, _headers, assets/, data/ -
+// into public/, and this uploads exactly that folder. Uploading the whole
+// repository instead once failed the build outright: node_modules carries a
+// 146 MB file and Cloudflare allows 25 MB per file.
+//
 // Any address that is not a real file - /products/gpu, /saved - is answered
 // with index.html, and the site's router shows the right page.
 {
