@@ -1,8 +1,8 @@
-// About, and the things a visitor is entitled to know before ordering.
+// About, and the things a visitor is entitled to know.
 //
 // Plain text, deliberately. This page exists to be read and to be accurate,
 // not to sell anything - so it says who runs the site, where the prices come
-// from, what happens when you order, and what is kept about you. Anything it
+// from, how buying works, and what is kept about you. Anything it
 // claims has to stay true as the site changes; a promise here that the code
 // stops keeping is worse than no page at all.
 
@@ -10,7 +10,7 @@ import { el, href } from '../util.js';
 import * as data from '../data.js';
 import { crumbs } from '../components.js';
 
-const EMAIL = 'yaseenalqudah3@gmail.com';
+const EMAIL = 'officialrighunt@gmail.com';
 
 export async function about() {
   let shops = [];
