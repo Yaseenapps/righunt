@@ -6,6 +6,10 @@ import { grid, crumbs, emptyState, pager, storeOf, isBackInStock } from '../comp
 /* ---------- saved ---------- */
 
 export async function saved() {
+  // Pull anything saved on another visit before painting, so the list is the
+  // same everywhere rather than whatever this browser happens to hold.
+  await store.sync();
+
   // Re-check saved items against the latest catalogue so price drops surface.
   try {
     const rows = await data.search();
@@ -22,7 +26,7 @@ export async function saved() {
     return el('div', {},
       crumbs([{ text: 'Home', href: href('home') }, { text: 'Saved' }]),
       emptyState('Nothing saved yet',
-        'Tap the heart on any product to keep it here. It saves instantly and stays in this browser — no account needed.',
+        'Tap the heart on any product to keep it here. It saves instantly — no account needed.',
         { href: href('home'), text: 'Browse products' }),
     );
   }
@@ -39,7 +43,7 @@ export async function saved() {
       el('div', {},
         el('h1', {}, 'Saved products'),
         el('p', { class: 'count' },
-          `${plural(items.length, 'item')} kept in this browser`,
+          plural(items.length, 'item'),
           drops.length ? ` · ${drops.length} cheaper than when you saved` : ''),
       ),
       clearAllButton(),
@@ -60,8 +64,55 @@ export async function saved() {
           el('a', { href: href(`product/${d.sub}/${d.id}`), style: 'font-weight:600;text-decoration:underline' }, clip(d.title)),
           ` — now ${money(d.price)} JOD, was ${money(d.savedPrice)} JOD`))),
     ) : null,
-    grid(items),
+    savedLines(items),
   );
+}
+
+/**
+ * Saved products as lines rather than tiles.
+ *
+ * A grid of cards is right for browsing. Here what matters is the price now,
+ * whether it moved, and the way to the shop that sells it.
+ */
+function savedLines(items) {
+  const list = el('div', { class: 'saved-lines' });
+
+  const rebuild = () => window.dispatchEvent(new PopStateEvent('popstate'));
+
+  for (const i of items) {
+    const page = href(`product/${i.sub}/${i.id}`);
+    const shop = i.storeName || storeOf(i.store).name || 'the shop';
+
+    list.append(el('div', { class: 'saved-line' + (i.inStock === false ? ' gone' : '') },
+      el('a', { class: 'sl-img', href: page },
+        i.image ? el('img', { src: i.image, alt: '', loading: 'lazy' }) : el('span', { class: 'ph' })),
+
+      el('div', { class: 'sl-main' },
+        el('a', { class: 'sl-title', href: page }, clip(i.title, 70)),
+        el('div', { class: 'sl-meta' },
+          el('span', { class: 'sl-shop' }, shop),
+          i.inStock === false ? el('span', { class: 'sl-gone' }, 'Out of stock') : null,
+          i.savedPrice && i.price < i.savedPrice
+            ? el('span', { class: 'sl-drop' }, `Down ${money(i.savedPrice - i.price)} since you saved it`)
+            : null),
+      ),
+
+      el('b', { class: 'sl-price' }, `${money(i.price || 0)} JOD`),
+
+      // Straight to the shop when the link is known. Things saved from the
+      // assistant do not carry one, and the product page looks it up.
+      i.url
+        ? el('a', { class: 'btn sl-check', href: i.url, target: '_blank', rel: 'noopener noreferrer' }, `Check at ${shop}`)
+        : el('a', { class: 'btn sl-check', href: page }, `Check at ${shop}`),
+
+      el('button', {
+        class: 'sl-remove', type: 'button', 'aria-label': 'Remove from saved',
+        onclick: () => { store.toggleSave({ id: i.id }); toast('Removed from saved'); rebuild(); },
+      }, '×'),
+    ));
+  }
+
+  return list;
 }
 
 /**
@@ -72,7 +123,7 @@ function savedTotal(items) {
   const live = items.filter((i) => i.inStock !== false);
   const total = live.reduce((sum, i) => sum + (i.price || 0), 0);
   const outOfStock = items.length - live.length;
-  const shops = new Set(live.map((i) => i.storeName)).size;
+  const shops = new Set(live.map((i) => i.storeName || i.store)).size;
   const dropped = items.reduce((sum, i) => sum + Math.max((i.savedPrice || i.price) - i.price, 0), 0);
 
   return el('div', { class: 'saved-total' },
@@ -83,7 +134,7 @@ function savedTotal(items) {
     el('div', { class: 'st-meta' },
       el('div', {}, `${plural(live.length, 'item')} from ${plural(shops, 'shop')}`),
       outOfStock ? el('div', {}, `${outOfStock} out of stock, not counted`) : null,
-      dropped > 0 ? el('div', { class: 'st-saved' }, `Down ${money(dropped)} JOD since you saved them`) : null,
+      dropped > 0 ? el('div', { class: 'st-drop' }, `Down ${money(dropped)} JOD since you saved them`) : null,
     ),
   );
 }
@@ -115,10 +166,12 @@ function clearAllButton() {
     }
     clearTimeout(timer);
     store.clearSaved();
-    toast('All saved products removed');
-    location.hash = href('saved');
-    // Same route, so force the view to rebuild.
-    window.dispatchEvent(new HashChangeEvent('hashchange'));
+    toast('Saved list cleared');
+    // Same route, so nothing navigates - ask the router to rebuild the view
+    // in place. This used to set location.hash, left over from when the site
+    // was a hash router; against real paths it did nothing at all and the
+    // cleared list stayed on screen until the visitor reloaded.
+    window.dispatchEvent(new PopStateEvent('popstate'));
   });
 
   return el('div', { class: 'head-action' }, btn);

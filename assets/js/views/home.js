@@ -9,45 +9,44 @@ export async function home() {
   const frag = document.createDocumentFragment();
 
   frag.append(
+    // Plain on purpose. This was a dark panel with a glow, a grid overlay, an
+    // uppercase slogan and three big stat blocks - the shape every template
+    // landing page has, and a shop we deal with said as much. What a price
+    // tool should open with is what it knows, stated once, and then the
+    // prices. The numbers are still here; they have just stopped shouting.
     el('section', { class: 'hero' },
-      el('span', { class: 'kicker' }, 'Jordan · updated automatically'),
-      el('h1', {}, 'Stop paying more for the ', el('em', {}, 'same part')),
+      el('h1', {}, 'PC and gaming prices in Jordan'),
       el('p', {},
-        'One place to compare graphics cards, gaming PCs, monitors, keyboards and ',
-        'consoles across Jordanian stores. Filter by the specs that matter, sort by ',
-        'price, and go straight to whoever has it cheapest. Free, no account.'),
-      el('div', { class: 'hero-stats' },
-        stat(idx.inStock.toLocaleString(), 'in stock now'),
-        stat(idx.onOffer.toLocaleString(), 'on offer today'),
-        stat(idx.stores.length, 'shops compared'),
+        `Every listing here comes from a Jordanian shop's own website. Compare the `,
+        'same part across all of them, filter by the specs you actually care about, ',
+        'and save the ones you are weighing up.'),
+      el('p', { class: 'hero-facts' },
+        el('b', {}, idx.inStock.toLocaleString()), ' in stock',
+        el('i', {}, '·'),
+        el('b', {}, idx.onOffer.toLocaleString()), ' discounted today',
+        el('i', {}, '·'),
+        el('b', {}, String(idx.stores.length)), ' shops',
+        el('i', {}, '·'),
+        'updated every 24 hours',
       ),
     ),
   );
 
-  frag.append(section(
-    'Shop by category',
-    'Pick what you need, then narrow it down by spec',
-    el('div', { class: 'cat-grid' }, idx.categories.map(categoryTile)),
-  ));
+  frag.append(section('Shop by category', el('div', { class: 'cat-grid' }, idx.categories.map(categoryTile))));
 
   const seen = await recentlyViewed();
   if (seen.length >= 3) {
-    frag.append(section('Pick up where you left off', 'Products you opened recently', rail(seen)));
+    frag.append(section('Recently viewed', rail(seen)));
   }
 
   for (const row of rows.rows || []) {
     if (!row.items?.length) continue;
-    frag.append(section(row.title, row.subtitle, rail(row.items), rowLink(row)));
+    frag.append(section(row.title, rail(row.items), rowLink(row)));
   }
 
   const back = await data.restocked().catch(() => ({ items: [] }));
   if (back.items?.length) {
-    frag.append(section(
-      'Back in stock',
-      'Sold out before, available again now',
-      rail(back.items.slice(0, 20)),
-      { href: href('restocked'), text: 'See all' },
-    ));
+    frag.append(section('Back in stock', rail(back.items.slice(0, 20)), { href: href('restocked'), text: 'See all' }));
   }
 
   return frag;
@@ -62,7 +61,9 @@ function categoryTile(c) {
         ? shots.map((src) => el('img', { src, alt: '', loading: 'lazy', decoding: 'async' }))
         : el('span', { class: 'ic', html: ICONS[c.icon] || ICONS.cpu })),
     el('b', {}, c.name),
-    el('small', {}, c.blurb),
+    // The one-line blurb under each name is gone. Six tiles each explaining
+    // themselves in a sentence is a feature grid, not a shop - and nobody
+    // needs told what Monitors are.
     el('span', { class: 'n' }, plural(c.count, 'product')),
   );
 }
@@ -88,7 +89,6 @@ const rowLink = (row) => {
   return null;
 };
 
-const stat = (value, label) => el('div', { class: 'hero-stat' }, el('b', {}, String(value)), el('span', {}, label));
 
 /** Rebuild the recently-viewed rail from ids kept in this browser. */
 async function recentlyViewed() {
@@ -136,7 +136,10 @@ const PER_PAGE = 24;
 
 /** Everything currently discounted, across every store. */
 export async function deals(page = 1, navigate) {
-  const { items } = await data.deals();
+  const [{ items }, { idx }] = await Promise.all([data.deals(), data.meta()]);
+  // The deals file holds the biggest discounts only, not every one - so say
+  // that, rather than "600 products reduced" beside a home page claiming 1,366.
+  const allOffers = Math.max(idx?.onOffer || 0, items.length);
 
   if (!items.length) {
     return el('div', {},
@@ -156,8 +159,9 @@ export async function deals(page = 1, navigate) {
       el('div', {},
         el('h1', {}, 'Live deals'),
         el('p', { class: 'count' },
-          el('b', {}, plural(items.length, 'product')),
-          ' currently reduced, biggest discount first'),
+          allOffers > items.length
+            ? [`The `, el('b', {}, items.length.toLocaleString()), ` biggest discounts, out of `, el('b', {}, allOffers.toLocaleString()), ' on offer today']
+            : [el('b', {}, plural(items.length, 'product')), ' currently reduced, biggest discount first']),
       ),
     ),
     grid(slice),
@@ -172,7 +176,7 @@ export async function deals(page = 1, navigate) {
 /**
  * Things a shop has put back on the shelf.
  *
- * We compare every product against the previous reading, six hours earlier,
+ * We compare every product against the previous reading, a day earlier,
  * so this is the one thing here a shopper could not reasonably find alone -
  * it means noticing the moment a sold-out card reappears at one of eight
  * shops. Empty on a brand-new site, because a restock is a change between
@@ -185,7 +189,7 @@ export async function restocked(page = 1, navigate) {
     return el('div', {},
       crumbs([{ text: 'Home', href: href('home') }, { text: 'Back in stock' }]),
       emptyState('Nothing has come back yet',
-        `We re-check all ${plural(idx.stores.length, 'shop')} every six hours and list anything that returns to stock here. `
+        `We re-check all ${plural(idx.stores.length, 'shop')} every 24 hours and list anything that returns to stock here. `
         + `Nothing has reappeared in the last ${days} days — check back soon.`,
         { href: href('home'), text: 'Back home' }),
     );

@@ -59,7 +59,7 @@ for (const required of ['index.json', 'search.json', 'home.json']) {
 }
 
 // The shell, and the copy of it that every deep link is served from.
-for (const page of ['index.html', '404.html']) {
+for (const page of ['index.html']) {
   const p = path.join(root, page);
   if (!existsSync(p)) { problems.push(`${page} is missing`); continue; }
   const html = readFileSync(p, 'utf8');

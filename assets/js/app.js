@@ -8,6 +8,7 @@ import { home, category, deals, restocked } from './views/home.js';
 import { browse } from './views/browse.js';
 import { product } from './views/product.js';
 import { saved, searchView, suggest } from './views/misc.js';
+import { about } from './views/about.js';
 
 const main = $('#main');
 let META = null;
@@ -32,7 +33,7 @@ $('#theme-toggle').addEventListener('click', () => {
 /* ---------- saved counter ---------- */
 
 function paintSavedCount() {
-  const n = store.get().saved.length;
+  const n = store.savedCount();
   const badge = $('#saved-count');
   badge.textContent = n > 99 ? '99+' : String(n);
   badge.hidden = n === 0;
@@ -123,12 +124,23 @@ function markNav(parts) {
 async function route(parts, qs) {
   const [head, a, b] = parts;
 
+  // The header box shows the search you are looking at, and nothing once you
+  // have left it - otherwise "keyboard" sat in the box on every page after.
+  if (head !== 'search') $('#search-input').value = '';
+
   if (!head || head === 'home') return home();
   if (head === 'category' && a) return category(a);
   if (head === 'products' && a) return browse(a, qs, navigate);
   if (head === 'product' && a && b) return product(a, b);
   if (head === 'product' && a) return product(null, a);
-  if (head === 'saved') return saved();
+  if (head === 'saved' || head === 'cart' || head === 'checkout') {
+    // For a while this page was a cart with a checkout behind it. Links to
+    // either may still be around, so answer them with Saved rather than
+    // "page not found", and put the address bar back to its real name.
+    if (head !== 'saved') navigate(href('saved'), { silent: true });
+    return saved();
+  }
+  if (head === 'about') return about();
   if (head === 'deals') return deals(parseInt(new URLSearchParams(qs).get('page') || '1', 10), navigate);
   if (head === 'restocked') return restocked(parseInt(new URLSearchParams(qs).get('page') || '1', 10), navigate);
   if (head === 'search') {
@@ -147,7 +159,7 @@ function titleFor(parts) {
   if (!head || head === 'home') return base;
   if (head === 'category') return `${META?.cats.get(a)?.name || 'Browse'} · ${base}`;
   if (head === 'products') return `${META?.subs.get(a)?.name || 'Products'} · ${base}`;
-  const map = { product: 'Product', saved: 'Saved', deals: 'Deals', search: 'Search', restocked: 'Back in stock' };
+  const map = { product: 'Product', saved: 'Saved', cart: 'Saved', checkout: 'Saved', about: 'About', deals: 'Deals', search: 'Search', restocked: 'Back in stock' };
   return `${map[head] || 'Not found'} · ${base}`;
 }
 
@@ -270,10 +282,10 @@ const AGO = (iso) => {
 
 function paintChrome(idx) {
   $('#strip-stores').textContent = `${idx.stores.length} stores · ${idx.inStock.toLocaleString()} products in stock`;
-  $('#strip-updated').textContent = `Updated ${AGO(idx.builtAt)}`;
+  $('#strip-updated').textContent = `Updated ${AGO(idx.builtAt)} · every 24 hours`;
 
   $('#foot-meta').textContent =
-    `${idx.total.toLocaleString()} listings · ${idx.inStock.toLocaleString()} in stock · ${idx.onOffer.toLocaleString()} on offer · last checked ${new Date(idx.builtAt).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })}`;
+    `${idx.total.toLocaleString()} listings · ${idx.inStock.toLocaleString()} in stock · ${idx.onOffer.toLocaleString()} on offer · refreshed every 24 hours · last checked ${new Date(idx.builtAt).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })}`;
 
   $('#foot-cats').replaceChildren(...idx.categories.map((c) =>
     el('li', {}, el('a', { href: href(`category/${c.id}`) }, c.name, ' ', el('span', { class: 'n' }, `(${c.count.toLocaleString()})`)))));
@@ -283,7 +295,50 @@ function paintChrome(idx) {
       s.name, ' ', el('span', { class: 'n' }, `(${s.count.toLocaleString()})`)))));
 }
 
+/* ---------------------------------------------------------------------------
+ * The header gets out of the way
+ *
+ * Three bars are stuck to the top - search, categories, subcategories - which
+ * is most of a phone screen gone before a single price is visible. So it
+ * slides away while you are reading down a long list and comes straight back
+ * the moment you scroll up, which is when you want the search box anyway.
+ * ------------------------------------------------------------------------ */
+(() => {
+  const root = document.documentElement;
+  let last = window.scrollY;
+  let queued = false;
+
+  const update = () => {
+    queued = false;
+    const y = window.scrollY;
+
+    // Never move it out from under someone typing in the search box it holds.
+    if (document.activeElement === input || !box.hidden) {
+      root.classList.remove('chrome-hidden');
+      last = y;
+      return;
+    }
+
+    if (y > last && y > 220) root.classList.add('chrome-hidden');
+    else if (y < last || y < 90) root.classList.remove('chrome-hidden');
+
+    last = y;
+  };
+
+  addEventListener('scroll', () => {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(update);
+  }, { passive: true });
+})();
+
 (async function boot() {
+  // Catch up with the saved list stored against this visitor, without waiting for
+  // it. The browser's own copy has already painted the header badge, so this
+  // only ever corrects it - and if Supabase is unreachable the site carries
+  // on with the local copy exactly as it did before there was a database.
+  store.sync();
+
   try {
     META = await data.meta();
     setStores(META.stores);

@@ -1,68 +1,116 @@
 /* ============================================================
-   RIGHUNT — dark-first, high-contrast, built for hardware
+   RIGHUNT
+
+   Warm neutrals, one accent, and the accent is blue.
+
+   This used to be near-black with a neon lime accent - the palette
+   every generated site has had since about 2024, and a shop we deal
+   with recognised it on sight. Nothing about it was badly made; it just
+   was not ours, and on a site asking people to hand over an address it
+   read as a template rather than a business.
+
+   So: blue that means "press this", red that means "reduced", green
+   that means "in stock" - the three signals shops have used for decades
+   - over warm greys instead of cold blue-black. Corners are tighter and
+   the techy display face is gone, because a tool should look like a
+   tool rather than a poster for one.
    ============================================================ */
 
 :root {
-  --bg:        #f2f3f5;
+  --bg:        #f7f7f5;
   --surface:   #ffffff;
-  --surface-2: #e9ebef;
-  --line:      #d8dbe2;
-  --line-2:    #bcc1cc;
-  --ink:       #0d0e12;
-  --ink-2:     #4b505e;
-  --ink-3:     #7d8494;
+  --surface-2: #efeeea;
+  --line:      #e2e0d9;
+  --line-2:    #c7c4bb;
+  --ink:       #1a1917;
+  --ink-2:     #57554f;
+  --ink-3:     #86837b;
 
-  /* On light backgrounds the lime is a fill, never text - too low contrast. */
-  --volt:      #6f9400;
-  --volt-fill: #d8ff3f;
-  --on-volt:   #0d0e12;
+  /* The one accent. Still named --volt from when it was lime; the name
+     stayed so every rule already using it kept working. */
+  --volt:      #1d4ed8;
+  --volt-fill: #1d4ed8;
+  --on-volt:   #ffffff;
 
-  --hot:       #d81b53;
-  --hot-fill:  #ffe3ec;
-  --good:      #0a8a52;
-  --good-fill: #e2f6ec;
+  --hot:       #c81e3a;
+  --hot-fill:  #fdeaed;
+  --good:      #0a7a46;
+  --good-fill: #e6f5ed;
 
-  --head-bg:   #0b0b11;
-  --head-ink:  #f4f5f8;
-  --head-ink-2:#9aa0b0;
-  --head-line: #23242f;
+  --head-bg:   #ffffff;
+  --head-ink:  #1a1917;
+  --head-ink-2:#6b6862;
+  --head-line: #e2e0d9;
 
-  --shadow:    0 1px 2px rgba(13, 14, 18, .05), 0 10px 26px -14px rgba(13, 14, 18, .22);
-  --shadow-lg: 0 6px 14px rgba(13, 14, 18, .08), 0 30px 60px -24px rgba(13, 14, 18, .3);
+  /* The bars above and below the search row, and the search field itself.
+     These were fixed dark values, so the top of the page stayed black no
+     matter which theme the rest of it was in. */
+  --strip-bg:    #efeeea;
+  --nav-bg:      #ffffff;
+  --subbar-bg:   #f7f7f5;
+  --nav-hover:   #ebe9e4;
+  --search-bg:   #f4f3f0;
+  --search-line: #d9d7cf;
+  --search-on:   #ffffff;
 
-  --r:    10px;
-  --r-sm: 7px;
+  --foot-bg:     #efeeea;
+  --foot-ink:    #57554f;
+  --foot-strong: #1a1917;
+  --foot-muted:  #86837b;
+
+  --shadow:    0 1px 2px rgba(26, 25, 23, .05), 0 8px 22px -14px rgba(26, 25, 23, .2);
+  --shadow-lg: 0 6px 14px rgba(26, 25, 23, .08), 0 28px 56px -24px rgba(26, 25, 23, .28);
+
+  --r:    6px;
+  --r-sm: 4px;
   --nav-h: 46px;
   --sub-h: 40px;
   --head-h: 176px;
 
-  --display: "Chakra Petch", "Segoe UI Semibold", system-ui, sans-serif;
+  /* One family throughout. The display face was doing as much of the
+     generated look as the lime was. */
+  --display: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
 html[data-theme="dark"] {
-  --bg:        #08080c;
-  --surface:   #111119;
-  --surface-2: #1a1a25;
-  --line:      #24242f;
-  --line-2:    #35364a;
-  --ink:       #f2f3f7;
-  --ink-2:     #a7adbd;
-  --ink-3:     #757c8e;
+  --bg:        #141416;
+  --surface:   #1c1c1f;
+  --surface-2: #26262a;
+  --line:      #312f36;
+  --line-2:    #45444c;
+  --ink:       #f4f3f1;
+  --ink-2:     #aeaba5;
+  --ink-3:     #82807a;
 
-  --volt:      #d8ff3f;
-  --volt-fill: #d8ff3f;
-  --on-volt:   #0d0e12;
+  /* Lighter for text, deeper for fills: the same blue at one value
+     cannot both sit on a dark page and carry white text. */
+  --volt:      #84a6ff;
+  --volt-fill: #2563eb;
+  --on-volt:   #ffffff;
 
-  --hot:       #ff4d7d;
-  --hot-fill:  #351023;
-  --good:      #2ee89a;
-  --good-fill: #0d3527;
+  --hot:       #ff5c78;
+  --hot-fill:  #33141c;
+  --good:      #3ad18d;
+  --good-fill: #0e3225;
 
-  --head-bg:   #0b0b11;
-  --head-ink:  #f4f5f8;
-  --head-ink-2:#9aa0b0;
-  --head-line: #23242f;
+  --head-bg:   #0f0f11;
+  --head-ink:  #f4f3f1;
+  --head-ink-2:#9a978f;
+  --head-line: #2a292f;
+
+  --strip-bg:    #0a0a0c;
+  --nav-bg:      #0a0a0c;
+  --subbar-bg:   #16161a;
+  --nav-hover:   #23232a;
+  --search-bg:   #1b1b20;
+  --search-line: #2e2d35;
+  --search-on:   #212127;
+
+  --foot-bg:     #0f0f11;
+  --foot-ink:    #aeaba5;
+  --foot-strong: #f4f3f1;
+  --foot-muted:  #82807a;
 
   --shadow:    0 1px 2px rgba(0, 0, 0, .5), 0 10px 26px -14px rgba(0, 0, 0, .8);
   --shadow-lg: 0 6px 14px rgba(0, 0, 0, .5), 0 30px 60px -24px rgba(0, 0, 0, .9);
@@ -107,7 +155,7 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
    ============================================================ */
 
 .strip {
-  background: #05050a;
+  background: var(--strip-bg);
   color: var(--head-ink-2);
   font-size: 11.5px;
   border-bottom: 1px solid var(--head-line);
@@ -118,7 +166,16 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 .strip-live { display: inline-flex; align-items: center; gap: 7px; color: var(--head-ink); font-weight: 600; }
 .strip-live i { width: 6px; height: 6px; border-radius: 50%; background: var(--good); box-shadow: 0 0 0 3px color-mix(in srgb, var(--good) 22%, transparent); }
 
-.site-header { position: sticky; top: 0; z-index: 60; background: var(--head-bg); }
+.site-header {
+  position: sticky; top: 0; z-index: 60; background: var(--head-bg);
+  transition: transform .24s ease;
+}
+/* Slid away while reading down a long list; back the instant you scroll up. */
+:root.chrome-hidden .site-header { transform: translateY(-100%); }
+@media (prefers-reduced-motion: reduce) {
+  .site-header { transition: none; }
+  :root.chrome-hidden .site-header { transform: none; }
+}
 
 .header-in { display: flex; align-items: center; gap: 18px; height: 66px; }
 
@@ -135,13 +192,13 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 .search { position: relative; flex: 1 1 auto; max-width: 660px; }
 .search input {
   width: 100%; height: 42px; padding: 0 38px 0 42px;
-  background: #16161f; color: var(--head-ink);
-  border: 1px solid #262735; border-radius: var(--r); outline: none;
+  background: var(--search-bg); color: var(--head-ink);
+  border: 1px solid var(--search-line); border-radius: var(--r); outline: none;
 }
-.search input::placeholder { color: #6d7386; }
-.search input:focus { border-color: var(--volt-fill); background: #1b1c27; }
-.search-ico { position: absolute; left: 13px; top: 11px; color: #6d7386; pointer-events: none; }
-.search-clear { position: absolute; right: 8px; top: 9px; width: 25px; height: 25px; border: 0; border-radius: 50%; background: #2a2b3a; color: #c9cddb; cursor: pointer; font-size: 16px; line-height: 1; }
+.search input::placeholder { color: var(--head-ink-2); }
+.search input:focus { border-color: var(--volt-fill); background: var(--search-on); }
+.search-ico { position: absolute; left: 13px; top: 11px; color: var(--head-ink-2); pointer-events: none; }
+.search-clear { position: absolute; right: 8px; top: 9px; width: 25px; height: 25px; border: 0; border-radius: 50%; background: var(--nav-hover); color: var(--head-ink-2); cursor: pointer; font-size: 16px; line-height: 1; }
 
 .suggest {
   position: absolute; inset-inline: 0; top: calc(100% + 8px); z-index: 70;
@@ -162,7 +219,7 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
   padding: 9px 12px; border-radius: var(--r-sm); border: 0; background: none;
   cursor: pointer; color: var(--head-ink-2);
 }
-.hbtn:hover { background: #1b1c27; color: var(--head-ink); }
+.hbtn:hover { background: var(--nav-hover); color: var(--head-ink); }
 .hbtn span { font-size: 13px; font-weight: 600; }
 .hbtn.icon-only { padding: 9px; }
 .hbtn-deal:hover { color: var(--volt-fill); }
@@ -171,12 +228,15 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
   border-radius: 9px; background: var(--hot); color: #fff; font-size: 10.5px; font-weight: 700;
   display: grid; place-items: center;
 }
+/* display:grid beats the hidden attribute, so an empty list kept showing a
+   red 0 badge for ever. Anything that sets display must say this too. */
+.badge[hidden] { display: none; }
 .ico-sun { display: none; }
 html[data-theme="dark"] .ico-moon { display: none; }
 html[data-theme="dark"] .ico-sun { display: block; }
 
 /* main category bar */
-.catbar { background: #05050a; border-top: 1px solid var(--head-line); }
+.catbar { background: var(--nav-bg); border-top: 1px solid var(--head-line); }
 .catbar-in { display: flex; align-items: stretch; gap: 0; height: var(--nav-h); overflow-x: auto; scrollbar-width: none; }
 .catbar-in::-webkit-scrollbar { display: none; }
 
@@ -186,7 +246,7 @@ html[data-theme="dark"] .ico-sun { display: block; }
   letter-spacing: .07em; text-transform: uppercase; color: var(--head-ink-2);
   border-bottom: 3px solid transparent;
 }
-.catlink:hover { color: var(--head-ink); background: #10111a; }
+.catlink:hover { color: var(--head-ink); background: var(--nav-hover); }
 .catlink[aria-current="true"] { color: var(--on-volt); background: var(--volt-fill); border-bottom-color: var(--volt-fill); }
 .catlink.is-deal { color: var(--hot); }
 .catlink.is-deal[aria-current="true"] { color: #fff; background: var(--hot); border-bottom-color: var(--hot); }
@@ -194,18 +254,18 @@ html[data-theme="dark"] .ico-sun { display: block; }
 .catlink.is-back[aria-current="true"] { color: #05130c; background: var(--good); border-bottom-color: var(--good); }
 
 /* subcategory bar */
-.subbar { background: #14151d; border-top: 1px solid var(--head-line); border-bottom: 1px solid var(--head-line); }
+.subbar { background: var(--subbar-bg); border-top: 1px solid var(--head-line); border-bottom: 1px solid var(--head-line); }
 .subbar-in { display: flex; align-items: center; gap: 4px; height: var(--sub-h); overflow-x: auto; scrollbar-width: none; }
 .subbar-in::-webkit-scrollbar { display: none; }
 .sublink {
   display: flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 999px;
-  white-space: nowrap; font-size: 12.5px; font-weight: 500; color: #b3b9c9;
+  white-space: nowrap; font-size: 12.5px; font-weight: 500; color: var(--head-ink-2);
 }
-.sublink:hover { background: #22242f; color: #fff; }
+.sublink:hover { background: var(--nav-hover); color: var(--head-ink); }
 .sublink[aria-current="true"] { background: var(--volt-fill); color: var(--on-volt); font-weight: 700; }
 .sublink b { font-weight: 600; opacity: .55; font-size: 11px; font-variant-numeric: tabular-nums; }
 .sublink[aria-current="true"] b { opacity: .6; }
-.subbar-label { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: #6d7386; padding-inline-end: 6px; flex: none; }
+.subbar-label { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--head-ink-2); padding-inline-end: 6px; flex: none; }
 
 /* ============================================================
    shared bits
@@ -225,7 +285,7 @@ main { padding: 24px 0 72px; min-height: 64vh; }
 .crumbs span { opacity: .45; }
 
 .page-head { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 22px; margin-bottom: 20px; }
-.page-head h1 { font-size: clamp(24px, 3.6vw, 36px); text-transform: uppercase; letter-spacing: -.005em; }
+.page-head h1 { font-size: clamp(22px, 3vw, 30px); letter-spacing: -.015em; }
 .page-head .count { margin: 6px 0 0; color: var(--ink-2); font-size: 14px; }
 .page-head .count b { color: var(--ink); }
 
@@ -241,7 +301,7 @@ main { padding: 24px 0 72px; min-height: 64vh; }
 .btn-lg { padding: 14px 22px; font-size: 15px; }
 
 .empty { text-align: center; padding: 84px 16px; color: var(--ink-2); }
-.empty h2 { margin-bottom: 10px; font-size: 22px; color: var(--ink); text-transform: uppercase; }
+.empty h2 { margin-bottom: 10px; font-size: 20px; color: var(--ink); letter-spacing: -.01em; }
 .empty p { max-width: 52ch; margin: 0 auto 18px; }
 
 /* ============================================================
@@ -249,45 +309,41 @@ main { padding: 24px 0 72px; min-height: 64vh; }
    ============================================================ */
 
 .hero {
-  position: relative; overflow: hidden;
-  background: #0b0b11; color: #fff;
-  border-radius: 16px; padding: clamp(26px, 4.4vw, 52px);
-  margin-bottom: 30px;
+  padding: 6px 0 26px;
+  margin-bottom: 28px;
+  border-bottom: 1px solid var(--line);
 }
-.hero::before {
-  content: ""; position: absolute; inset: -40% -10% auto auto; width: 60%; aspect-ratio: 1;
-  background: radial-gradient(circle, color-mix(in srgb, var(--volt-fill) 26%, transparent), transparent 62%);
-  pointer-events: none;
+.hero h1 {
+  font-size: clamp(24px, 3.4vw, 36px);
+  line-height: 1.12;
+  max-width: 20ch;
+  letter-spacing: -.01em;
 }
-.hero::after {
-  content: ""; position: absolute; inset: 0;
-  background-image: linear-gradient(color-mix(in srgb, #fff 4%, transparent) 1px, transparent 1px),
-                    linear-gradient(90deg, color-mix(in srgb, #fff 4%, transparent) 1px, transparent 1px);
-  background-size: 46px 46px; pointer-events: none;
+.hero p {
+  margin: 12px 0 0;
+  max-width: 62ch;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ink-2);
 }
-.hero > * { position: relative; z-index: 1; }
-.hero .kicker {
-  display: inline-flex; align-items: center; gap: 8px; margin-bottom: 14px;
-  padding: 5px 11px; border-radius: 999px; background: color-mix(in srgb, var(--volt-fill) 16%, transparent);
-  color: var(--volt-fill); font-size: 11.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+.hero-facts {
+  margin-top: 16px !important;
+  font-size: 13.5px !important;
+  color: var(--ink-3) !important;
 }
-.hero h1 { font-size: clamp(28px, 5.2vw, 54px); line-height: 1.03; max-width: 17ch; text-transform: uppercase; }
-.hero h1 em { font-style: normal; color: var(--volt-fill); }
-.hero p { margin: 16px 0 0; color: #b9bfd0; max-width: 58ch; font-size: clamp(14px, 1.5vw, 16.5px); }
-
-.hero-stats { display: flex; flex-wrap: wrap; gap: 12px 40px; margin-top: 28px; }
-.hero-stat b { display: block; font-family: var(--display); font-size: clamp(22px, 3vw, 30px); line-height: 1; }
-.hero-stat span { display: block; margin-top: 5px; font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: #8f96a8; }
+.hero-facts b { color: var(--ink); font-weight: 700; font-variant-numeric: tabular-nums; }
+.hero-facts i { font-style: normal; margin: 0 9px; color: var(--line-2); }
 
 .section { margin: 38px 0; }
-.section-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 2px solid var(--ink); }
-.section-head h2 { font-size: clamp(17px, 2.2vw, 22px); text-transform: uppercase; }
+.section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 14px; padding-bottom: 9px; border-bottom: 1px solid var(--line); }
+.section-head h2 { font-size: clamp(16px, 1.9vw, 19px); letter-spacing: -.01em; }
 .section-head p { margin: 5px 0 0; font-size: 13px; color: var(--ink-3); }
-.section-head a { font-size: 12.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; border-bottom: 2px solid var(--volt-fill); padding-bottom: 2px; }
+.section-head a { font-size: 13px; font-weight: 600; white-space: nowrap; color: var(--ink-2); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-2); }
+.section-head a:hover { color: var(--ink); text-decoration-color: currentColor; }
 
-.cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+.cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 10px; }
 .cat-tile {
-  position: relative; display: flex; flex-direction: column; gap: 5px; padding: 20px;
+  position: relative; display: flex; flex-direction: column; gap: 3px; padding: 13px;
   background: var(--surface); border: 1px solid var(--line); border-radius: var(--r);
   overflow: hidden; transition: transform .14s, border-color .14s;
 }
@@ -315,9 +371,9 @@ main { padding: 24px 0 72px; min-height: 64vh; }
 
 .cat-tile .ic { width: 40px; height: 40px; border-radius: 9px; background: var(--surface-2); color: var(--ink); display: grid; place-items: center; }
 .cat-tile .ic svg { width: 22px; height: 22px; }
-.cat-tile b { font-family: var(--display); font-size: 16.5px; text-transform: uppercase; }
+.cat-tile b { font-size: 14.5px; font-weight: 650; letter-spacing: -.005em; }
 .cat-tile small { color: var(--ink-3); font-size: 12.5px; }
-.cat-tile .n { margin-top: auto; padding-top: 10px; font-size: 11.5px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-3); }
+.cat-tile .n { margin-top: auto; padding-top: 7px; font-size: 12px; font-weight: 500; color: var(--ink-3); }
 
 /* horizontal rail */
 .rail-wrap { position: relative; }
@@ -507,8 +563,10 @@ html[data-theme="dark"] .fopt input { accent-color: var(--volt-fill); }
 .seller .who b { display: block; font-size: 15px; }
 .seller .who span { font-size: 12px; color: var(--ink-3); }
 
-.buy-row { display: flex; gap: 10px; margin: 18px 0; }
-.buy-row .btn-primary { flex: 1; }
+.buy-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 18px 0; }
+/* Shop names are long ("Check at City Center Computers"), so the label may
+   wrap rather than push the page sideways on a phone. */
+.buy-row .btn-primary { flex: 1 1 200px; min-width: 0; white-space: normal; text-align: center; }
 
 .opt-group { margin: 18px 0; }
 .opt-group h3 { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 9px; color: var(--ink-2); }
@@ -523,7 +581,7 @@ html[data-theme="dark"] .fopt input { accent-color: var(--volt-fill); }
 .specs td { font-weight: 600; }
 
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 18px 20px; margin: 22px 0; }
-.panel h2 { font-size: 14px; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 2px solid var(--ink); }
+.panel h2 { font-size: 15px; letter-spacing: -.01em; margin-bottom: 12px; padding-bottom: 9px; border-bottom: 1px solid var(--line); }
 .panel .note { margin: 10px 0 0; font-size: 12px; color: var(--ink-3); }
 /* Something a shopper was waiting for has come back - worth being loud. */
 .panel-back { border-color: var(--good); background: color-mix(in srgb, var(--good) 8%, var(--surface)); }
@@ -552,24 +610,26 @@ html[data-theme="dark"] .fopt input { accent-color: var(--volt-fill); }
 }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
-.site-footer { background: #0b0b11; color: #b9bfd0; padding: 42px 0 26px; margin-top: 40px; }
+.site-footer { background: var(--foot-bg); color: var(--foot-ink); padding: 42px 0 26px; margin-top: 40px; }
 .foot-grid { display: grid; grid-template-columns: minmax(0, 1.8fr) repeat(3, minmax(0, 1fr)); gap: 32px; }
-.foot-brand { font-family: var(--display); font-size: 22px; font-weight: 700; color: #fff; margin-bottom: 12px; }
+.foot-brand { font-size: 21px; font-weight: 800; letter-spacing: -.02em; color: var(--foot-strong); margin-bottom: 12px; }
 .foot-brand em { font-style: normal; color: var(--volt-fill); }
 .foot-main { margin: 0 0 12px; font-size: 13.5px; max-width: 60ch; }
-.foot-meta { margin: 0; font-size: 12.5px; color: #7d8494; }
-.site-footer h3 { font-size: 11.5px; letter-spacing: .12em; text-transform: uppercase; color: #fff; margin-bottom: 12px; }
+.foot-meta { margin: 0; font-size: 12.5px; color: var(--foot-muted); }
+.site-footer h3 { font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--foot-strong); margin-bottom: 12px; }
 .foot-links li { margin-bottom: 8px; font-size: 13.5px; }
 .foot-links a:hover { color: var(--volt-fill); }
-.foot-links .n { color: #6d7386; font-size: 12px; }
-.foot-base { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px; margin-top: 34px; padding-top: 20px; border-top: 1px solid var(--head-line); font-size: 12px; color: #6d7386; }
+.foot-links .n { color: var(--foot-muted); font-size: 12px; }
+.foot-base { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px; margin-top: 34px; padding-top: 20px; border-top: 1px solid var(--line); font-size: 12px; color: var(--foot-muted); }
 
 /* ============================================================
    responsive
    ============================================================ */
 
 @media (max-width: 1100px) {
-  .pdp { grid-template-columns: 1fr; gap: 24px; }
+  /* minmax(0, 1fr), not 1fr: a plain 1fr column grows to its widest child, and
+     the shop button made the product page wider than a phone. */
+  .pdp { grid-template-columns: minmax(0, 1fr); gap: 24px; }
   .gallery { position: static; max-width: 470px; }
   .foot-grid { grid-template-columns: 1fr 1fr; }
   .foot-grid > :first-child { grid-column: 1 / -1; }
@@ -602,8 +662,14 @@ html[data-theme="dark"] .fopt input { accent-color: var(--volt-fill); }
   .foot-grid { grid-template-columns: 1fr; gap: 26px; }
 }
 
+@media (max-width: 600px) {
+  .strip-sep, #strip-stores { display: none; }
+}
+
+/* The live dot stays; the words go. .strip-live span matched nothing - the
+   words are a bare text node - so on a phone the strip ran off the edge. */
 @media (max-width: 420px) {
-  .strip-live span { display: none; }
+  .strip-live { font-size: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -645,7 +711,7 @@ html[data-theme="dark"] .fopt input { accent-color: var(--volt-fill); }
 /* Lifted clear of the very bottom edge, so it never sits under a phone's
    home indicator or over the pagination. */
 .as-launch {
-  position: fixed; inset-inline-end: 22px; bottom: 84px; z-index: 120;
+  position: fixed; inset-inline-end: 22px; bottom: 24px; z-index: 120;
   display: flex; align-items: center; gap: 9px;
   padding: 13px 18px; border: 0; border-radius: 999px;
   background: var(--volt-fill); color: var(--on-volt);
@@ -667,12 +733,12 @@ html[data-theme="dark"] .fopt input { accent-color: var(--volt-fill); }
 
 .as-head {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
-  padding: 13px 15px; background: var(--head-bg); color: #fff; flex: none;
+  padding: 13px 15px; background: var(--head-bg); color: var(--head-ink); flex: none;
 }
 .as-head b { display: block; font-family: var(--display); font-size: 15px; letter-spacing: .02em; }
 .as-head small { display: block; font-size: 11px; color: var(--head-ink-2); margin-top: 2px; }
 .as-close { border: 0; background: none; color: var(--head-ink-2); font-size: 24px; line-height: 1; cursor: pointer; padding: 0 4px; }
-.as-close:hover { color: #fff; }
+.as-close:hover { color: var(--head-ink); }
 
 .as-feed { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; scrollbar-width: thin; }
 
@@ -723,7 +789,7 @@ html[data-theme="dark"] .as-warn { color: #ffc46b; }
 .as-send:hover { filter: brightness(1.06); }
 
 @media (max-width: 620px) {
-  .as-launch { inset-inline-end: 14px; bottom: 72px; padding: 12px 15px; }
+  .as-launch { inset-inline-end: 14px; bottom: 16px; padding: 12px 15px; }
   .as-launch span { display: none; }
   .as-panel {
     inset-inline: 8px; bottom: 72px; width: auto;
@@ -748,7 +814,7 @@ html[data-theme="dark"] .as-warn { color: #ffc46b; }
 .st-sum { font-family: var(--display); font-size: clamp(24px, 4vw, 32px); font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums; margin-top: 4px; }
 .st-sum small { font-size: 15px; font-weight: 600; color: var(--ink-2); }
 .st-meta { text-align: end; font-size: 12.5px; color: var(--ink-3); line-height: 1.7; }
-.st-saved { color: var(--good); font-weight: 650; }
+.st-drop { color: var(--good); font-weight: 650; }
 @media (max-width: 560px) { .st-meta { text-align: start; } }
 
 /* Contact block in the footer. */
@@ -766,3 +832,99 @@ html[data-theme="dark"] .as-warn { color: #ffc46b; }
   color: var(--good); border: 1px solid var(--good); border-radius: 8px;
   background: color-mix(in srgb, var(--good) 8%, transparent);
 }
+
+/* ===========================================================================
+ * Saved, as lines
+ *
+ * Tiles are for browsing. On the Saved page what matters is the price now,
+ * whether it moved since it was saved, and the way to the shop that has it.
+ * ======================================================================== */
+
+.saved-lines { display: grid; gap: 10px; margin-top: 18px; }
+
+.saved-line {
+  display: grid;
+  grid-template-columns: 64px 1fr auto auto auto;
+  gap: 14px;
+  align-items: center;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+}
+.saved-line.gone { opacity: .62; }
+
+.sl-img { display: block; width: 64px; height: 64px; border-radius: 8px; overflow: hidden; background: var(--surface-2); }
+.sl-img img { width: 100%; height: 100%; object-fit: contain; }
+.sl-img .ph { display: block; width: 100%; height: 100%; }
+
+.sl-main { min-width: 0; }
+.sl-title { display: block; font-weight: 600; font-size: 14px; line-height: 1.35; color: var(--ink); text-decoration: none; }
+.sl-title:hover { text-decoration: underline; }
+.sl-meta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 5px; font-size: 12px; color: var(--ink-3); }
+.sl-shop { font-weight: 600; }
+.sl-gone { color: var(--hot); font-weight: 600; }
+.sl-drop { color: var(--good); font-weight: 600; }
+
+.sl-price { text-align: right; min-width: 80px; font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.sl-check { padding: 8px 12px; font-size: 13px; white-space: nowrap; }
+
+.sl-remove {
+  width: 28px; height: 28px; border: 1px solid var(--line); border-radius: 8px;
+  background: transparent; color: var(--ink-3); font-size: 16px; line-height: 1; cursor: pointer;
+}
+.sl-remove:hover { border-color: var(--hot); color: var(--hot); background: var(--hot-fill); }
+
+@media (max-width: 720px) {
+  .saved-line { grid-template-columns: 56px 1fr auto; row-gap: 10px; }
+  .sl-img { width: 56px; height: 56px; }
+  .sl-main { grid-column: 2 / -1; }
+  .sl-price { grid-column: 1 / 3; grid-row: 2; text-align: start; }
+  .sl-remove { grid-column: 3; grid-row: 2; justify-self: end; }
+  .sl-check { grid-column: 1 / -1; grid-row: 3; white-space: normal; text-align: center; }
+}
+
+.buy-row .btn svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+
+/* Long-form reading: About, and anything else that is mostly words.
+   Narrow measure and generous line height, because a 100-character line is
+   where people lose their place. */
+.prose { max-width: 68ch; }
+.prose h1 { margin: 8px 0 14px; font-size: clamp(24px, 3.4vw, 34px); letter-spacing: -.01em; }
+.prose h2 { margin: 32px 0 10px; font-size: 17px; letter-spacing: -.005em; }
+.prose p { margin: 0 0 13px; font-size: 15px; line-height: 1.72; color: var(--ink-2); }
+.prose .lead { font-size: 17px; line-height: 1.6; color: var(--ink); }
+.prose b { color: var(--ink); }
+.prose a { color: var(--ink); text-decoration: underline; text-underline-offset: 2px; }
+.prose ul { margin: 0 0 14px; padding-inline-start: 20px; }
+.prose li { margin-bottom: 7px; font-size: 15px; line-height: 1.65; color: var(--ink-2); }
+.about-foot { margin-top: 30px !important; padding-top: 14px; border-top: 1px solid var(--line); font-size: 13px !important; color: var(--ink-3) !important; }
+
+/* About, given a door rather than a line of small print at the very bottom.
+   Someone deciding whether to order from a site they have not heard of is
+   looking for exactly this, and they should not have to hunt for it. */
+.foot-cta {
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  padding: 20px 0; border-top: 1px solid var(--line);
+}
+.foot-cta span { font-size: 13px; color: var(--foot-ink); }
+.btn-about {
+  flex: none; padding: 10px 20px; border-radius: 9px;
+  background: var(--volt-fill); color: var(--on-volt);
+  font-weight: 700; font-size: 14px; text-decoration: none;
+  border: 0; white-space: nowrap;
+}
+.btn-about:hover { filter: brightness(1.06); }
+@media (max-width: 560px) {
+  .foot-cta { gap: 10px; }
+  .btn-about { width: 100%; text-align: center; }
+}
+
+
+/* A reply the model rewrote. Fades in so the swap does not look like a
+   glitch, and is otherwise identical to one we wrote ourselves. */
+.as-msg.as-said { animation: as-said-in .25s ease; }
+@keyframes as-said-in { from { opacity: .45; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .as-msg.as-said { animation: none; } }

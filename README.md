@@ -55,7 +55,7 @@ node scraper/build.js --rebuild
 | Number One Store | numberonestore.net | OpenCart catalogue pages |
 | Midas Computer Center | mcc-jo.com | FleetCart category JSON |
 | Instagram & Facebook | — | curated by hand — see below |
-| City Center Computers | citycenter.jo | **off** — see below |
+| City Center Computers | citycenter.jo | product pages, one at a time |
 
 Adding a shop is one entry in `scraper/stores.js`. If it runs Shopify,
 WooCommerce, OpenCart or FleetCart, an existing adapter already handles it.
@@ -63,10 +63,12 @@ WooCommerce, OpenCart or FleetCart, an existing adapter already handles it.
 Each site's `robots.txt` is checked first, requests are spaced about a second
 apart per host, and the client identifies itself.
 
-**City Center Computers** answers with `HTTP 403` — the shop is deliberately
-refusing automated access, and that is not worked around. It is switched off in
-`scraper/stores.js`. The adapter still works: if the block is lifted, or you
-arrange access with the shop, set `enabled: true` and it reappears.
+A shop that answers `HTTP 403`, or serves a challenge page instead of its
+catalogue, is refusing automated access - and that is not worked around. The
+shop keeps its last good listings and the refusal is recorded in
+`data/status.json`. Some shops refuse GitHub's servers while answering an
+ordinary connection, so a shop can read fine locally and fail on the daily
+run. The fix for that is the shop's permission, not a disguise.
 
 ### Instagram and Facebook sellers
 
@@ -123,7 +125,7 @@ data/                  generated - do not hand-edit
   deals.json           every current discount
   status.json          per-shop success/failure from the last run
 
-assets/js/             the site: hash router, nav bars, views, filters, saving
+assets/js/             the site: router, nav bars, views, filters, saved products
 ```
 
 ### Working out what a product actually is
@@ -153,6 +155,27 @@ Then `sanitize()` argues with the result:
   cheap clearance part could be hidden by it — raise or remove a floor if you
   would rather have the odd stray listing than lose those.
 
+### Checking what a shop is losing
+
+The shops' own labels decide a lot. Shopify shops file every product under a
+type ("Console Game", "Simulators", "Keyboard") and in collections ("Gaming
+Mouse", "Racing Simulators Collection"), and titles often never say what the
+thing is - "Ghost of Yotei PlayStation 5 (PS5)" does not say "game". When the
+title rules lose a product, a gaming label from the shop is trusted
+(`shopTypeSub()` in `taxonomy.js`), then the title is read again on its own,
+and last `gamingByTitle()` catches games named by platform.
+
+To see what a shop is losing, download its listings once and audit them as
+often as you like while changing the rules:
+
+```bash
+node scripts/dump-raw.mjs igeek gameon
+node scripts/audit-classify.mjs igeek
+```
+
+`audit-classify` prints how the shop's listings are filed and, for everything
+hidden, the shop labels it came in under with sample titles.
+
 ### Filters
 
 `build.js` precomputes, per category, which filters make sense and which values
@@ -167,15 +190,21 @@ rather than guessed.
 Counts next to each option are computed in one pass per filter, not one pass per
 option — that is what keeps a 1,200-product category responsive while typing.
 
-### The build assistant
+### The PC builder
 
-The floating **Assistant** answers from `data/builder.json` — nothing but
-in-stock rows from the catalogue. It is a rules engine (`assets/js/lib/builder.js`),
-not a language model, and that is the point: it can only return products that
-exist at the price shown, so it cannot invent a part, a price or a shop.
+The floating **Build a PC** panel answers from `data/builder.json` — nothing but
+in-stock rows from the catalogue. A language model (via `supabase/ai.sql`) reads
+the question and words the reply, but the parts are chosen by the rules engine
+(`assets/js/lib/builder.js`) and every card is drawn from the catalogue at its
+own price, so it cannot invent a part, a price or a shop.
+
+- Asking to change one part of a build shown — *"a better graphics card"*,
+  *"a faster processor"*, *"put a 9070 XT in it"* — changes that part and only
+  that part (`assets/js/lib/swap.js`), plus a bigger power supply or a new board
+  only when the machine would not work without one.
 
 - *"Build me a gaming PC for 2000 JD"* → a complete parts list, a total, and
-  **Agree — save all parts**, which puts every part in Saved.
+  **Save all parts**, which saves every part.
 - *"Best 32GB DDR5 under 120 JD"* → three ranked options, each savable.
 - Processor and motherboard are chosen **as a pair** so their sockets match;
   memory must match the board's generation; the power supply is sized for the
@@ -216,34 +245,64 @@ have said what you want and the only question left is who sells it for least.
 `isSpecificChoice()` in `assets/js/util.js` decides this per category. Choosing
 a sort yourself always wins and is remembered.
 
-### What the visitor's browser remembers
+### Saved products, and what remembers them
 
-No account, no server storage. `localStorage` keeps saved products, recently
-viewed items, the last filters used in each category, the in-stock preference
-and the theme. Everything writes immediately — nothing to submit or confirm.
+Still no sign-up. The first time a browser opens the site it is signed in to
+Supabase **anonymously** — no email, no password, nothing asked of the visitor
+— which gives them a real account, which is what lets a saved list belong to
+someone and survive closing the tab.
+
+Two copies are kept, deliberately:
+
+- **`localStorage`** is what paints the page. It is read synchronously before
+  any network call, so the Saved badge and the Saved page are right immediately,
+  and the site still works with Supabase unreachable. It also holds the things
+  that are nobody's business but this browser's: recently viewed items, the
+  last filters used per category, the in-stock preference and the theme.
+- **Supabase** is the copy that lasts, and the one you can look at.
+
+The browser is written first and the database follows, which is why saving
+feels instant — nothing waits on a round trip. Writes go through a
+queue so they cannot overtake each other or the sync that reads them back;
+without it, clearing the list raced its own refresh and put everything back.
+
+`assets/js/supabase.js` talks to the REST API directly rather than using
+`supabase-js`. The official client is 228KB of realtime websockets, storage
+and edge functions; this site needs a session and a few REST calls, and the project has no build step to bundle the rest with.
+
+**Security.** The publishable key in that file is meant to be public and
+grants nothing by itself. What actually separates one visitor's saved list from
+another is Row Level Security, enforced by Postgres: policies that each say *you may touch a row if it is
+yours*. Nothing is granted to logged-out
+requests at all. `supabase/schema.sql` is the whole thing, and it is safe to
+re-run.
+
+Set up: run `supabase/schema.sql` in the SQL Editor, then switch on
+**Authentication → Sign In / Providers → Allow anonymous sign-ins**. Enabling
+CAPTCHA there is strongly advised before the site is promoted — without it,
+bots can create accounts.
 
 ---
 
 ## Hosting
 
-The site is static, so any static host will serve it. It currently runs on
-Vercel, connected to this repository: every push redeploys, and the scraper's
-own price commits redeploy it too.
+The site is static, so any static host will serve it. It runs on **Cloudflare
+Pages**, connected to this repository: every push redeploys, and the scraper's
+own daily price commits redeploy it too.
 
-`vercel.json` does two things, and the reasoning is worth keeping because JSON
-cannot carry a comment:
+Cloudflare Pages settings: framework preset **None**, build command **empty**,
+build output directory **`/`**.
 
-- **The rewrite.** Every page except the front one - `/products/gpu`,
-  `/product/gpu/igeek-abc`, `/saved` - is a route the app handles, not a file
-  on disk. Without the rewrite the host answers **404** for all of them: the
-  page still works, because the app shell is what gets served, but a 404 is
-  what search engines record, and a site meant to be found on Google cannot
-  have every page marked missing. The rewrite points them at `404.html` rather
-  than `index.html` on purpose - see the comment inside that file - and Vercel
-  checks real files first, so `/data/*.json` and `/assets/*` are unaffected.
-- **The cache headers.** Prices change four times a day and the code rarely
-  does, so data is revalidated every five minutes while assets are held for an
-  hour.
+Every page except the front one - `/products/gpu`, `/product/gpu/igeek-abc`,
+`/saved` - is a route the app handles, not a file on disk. There is
+deliberately no `404.html`: without one, Cloudflare Pages treats the project
+as a single-page app and answers those addresses with `index.html` and a 200,
+which is what search engines need to see. `index.html` loads its assets from
+the site root so it works at any depth - see the comment inside it.
+
+`_headers` sets caching: price data is revalidated every five minutes, assets
+are held for an hour. (`vercel.json` does the same on Vercel, if it is ever
+used again.)
 
 ## Publishing it on GitHub Pages instead
 
@@ -293,7 +352,7 @@ before `configure-pages` will run.
 
 **8. Wait ~20–25 minutes** — the first run reads all six shops. Your site is
 then at `https://<username>.github.io/<repo>/`, also shown under Settings →
-Pages. After this it refreshes and redeploys itself every 6 hours.
+Pages. After this it refreshes and redeploys itself every 24 hours.
 
 The site is served from a project subpath (`/<repo>/`) and every path in the
 project is relative, so it works there with no configuration.
@@ -314,5 +373,5 @@ the site still updates, and the failure is recorded in `data/status.json`.
   confirm the exact model before buying.
 - Classification is rules-based over messy retailer text. It is good, not
   perfect; the occasional oddity will still slip into a category.
-- No payments and no checkout ever happen here. Every Buy button opens the
-  shop's own product page.
+- RIGHUNT does not sell anything. No payments and no checkout happen here;
+  every "Check at" button opens the shop's own product page.

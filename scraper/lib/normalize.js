@@ -1,5 +1,5 @@
 // Raw adapter rows -> the single canonical product shape the site renders.
-import { classify, detectBrand, extractSpecs, sanitize, SUB_TO_CAT } from './taxonomy.js';
+import { classify, detectBrand, extractSpecs, sanitize, shopTypeSub, gamingByTitle, isHidden, SUB_TO_CAT } from './taxonomy.js';
 import { hash, slugify } from './text.js';
 
 /**
@@ -93,6 +93,68 @@ export function normalize(raw, store) {
   // Too cheap to be what we filed it as - it is an accessory for one.
   const floor = PRICE_FLOOR[finalSub];
   if (floor && raw.price < floor) finalSub = 'other';
+
+  // The shop's own gaming label, where the rules above lost the product or
+  // filed it in the wrong gaming aisle. See shopTypeSub() for why.
+  const typed = shopTypeSub(raw.productType, title, raw.price, raw.storePath);
+  if (typed && typed !== finalSub) {
+    const GAMING = new Set(['video-game', 'console', 'console-accessory', 'controller']);
+    const lost = isHidden(finalSub) || !SUB_TO_CAT[finalSub];
+    if (lost || (GAMING.has(typed) && (GAMING.has(finalSub) || finalSub === 'cooling')) || typed === 'video-game') {
+      const handheld = typed === 'console' && /\b(handheld|retro|portable|console|quest|vr)\b/i.test(title);
+      const typedFloor = PRICE_FLOOR[typed];
+      // A shop's "Microphones" aisle also holds the stands and boom arms, and
+      // its "Headsets" aisle the headset stands. The label says where to look;
+      // the usual checks still decide whether this is the thing itself.
+      const lead = ` ${title.split(/\s(?:with|w\/|\+|&)\s|,\s/i)[0]} `;
+      const PERIPHERAL_EXTRAS = /\b(stands?|hangers?|holders?|arms?|booms?|mounts?|tripods?|cables?|cords?|adapt[oe]rs?|extensions?|splitters?|converters?|key\s*caps?|keycaps?|pullers?|pads?|mats?|bungees?|skates?|charging\s+(docks?|kits?|stations?)|ear\s*pads?|to\s+3\.5\s*mm)\b/i;
+      const checked = ['keyboard', 'mouse', 'headset', 'microphone', 'controller'].includes(typed)
+        // Titles in these aisles often never name the product ("ATTACK SHARK
+        // X85 WIRELESS JADE SWITCH"), so the label is trusted - unless what is
+        // being sold is plainly the stand, the lead or the spare part.
+        ? (PERIPHERAL_EXTRAS.test(lead) && !(typed === 'controller' && /\b(racing|wheel|simulator|seat|cockpit)\b/i.test(lead)) ? 'other' : typed)
+        : GAMING.has(typed) || typed === 'monitor' ? typed : sanitize(typed, title, extractSpecs(typed, title, raw.description || ''));
+      if (isHidden(checked) || !SUB_TO_CAT[checked]) {
+        // not the thing - leave it where the rules put it
+      } else if (!typedFloor || raw.price >= typedFloor || handheld) finalSub = checked;
+      else if (typed === 'console') finalSub = 'console-accessory';
+    }
+  }
+
+  // A second look from the title alone. The shop's filing can send a loose
+  // part down the wrong road: GameOn keeps motherboards and memory in a
+  // "Gaming PCs" collection, so they were read as whole computers, failed
+  // the checks a computer has to pass, and were hidden - an ASUS Z790 board
+  // and a Kingston Fury kit among them. The title on its own knows better.
+  if (!certain && (isHidden(finalSub) || !SUB_TO_CAT[finalSub])) {
+    // The shop's category without the URL slug first (a slug that reads
+    // "...adjustable motherboard position bracket" sent a case to boards),
+    // then the title with nothing else at all.
+    for (const hint of [raw.storePath || '', '']) {
+      const again = classify({ title, storePath: hint, productType: hint ? raw.productType || '' : '', description: '' });
+      if (again.sub === sub || isHidden(again.sub)) continue;
+      const retrySpecs = extractSpecs(again.sub, title, raw.description || '');
+      const retried = sanitize(again.sub, title, retrySpecs);
+      // An office desktop that lists its processor - "Lenovo V530 Tower Intel
+      // Core i5-9400 - Desktop" - is a computer, not a processor.
+      const wholeMachine = /\b(desktop|laptop|notebook|latitude|vostro|optiplex|thinkcentre|think\s+centre|elitedesk|prodesk|all[\s-]in[\s-]one|micro\s*tower|sff|mt)\b/i.test(title);
+      if (wholeMachine && ['cpu', 'gpu', 'ram', 'storage', 'motherboard', 'psu', 'cooling', 'case'].includes(retried)) continue;
+      if (retried === 'cpu' && /\b(trx40|x[3-8]\d0e?|z[4-8]\d0|b[4-8]\d0|h[4-8]\d0)\b/i.test(title) && !/\bprocessor|cpu\b/i.test(title)) continue;
+      if (!isHidden(retried) && SUB_TO_CAT[retried] && !(PRICE_FLOOR[retried] > raw.price)) { finalSub = retried; break; }
+    }
+  }
+
+  // And last, the gaming products a title gives away on its own.
+  if (!certain && (isHidden(finalSub) || !SUB_TO_CAT[finalSub])) {
+    const byTitle = gamingByTitle(title, raw.price);
+    if (byTitle) finalSub = byTitle;
+  }
+
+  // A cooling dock or fan cover for a console is a console accessory, not PC
+  // cooling - "DOBE Cooling Charging Dock For PS5 SLIM" sat among CPU coolers.
+  if (finalSub === 'cooling' && /\b(ps[45]|playstation|xbox|nintendo|switch|console)\b/i.test(title)) {
+    finalSub = 'console-accessory';
+  }
 
   const finalCat = SUB_TO_CAT[finalSub];
   if (finalSub !== sub) specs = extractSpecs(finalSub, title, description);

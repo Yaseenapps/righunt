@@ -9,8 +9,8 @@ name: Refresh prices
 
 on:
   schedule:
-    # Every 6 hours. GitHub runs cron in UTC.
-    - cron: '15 */6 * * *'
+    # Once a day, at 03:15 UTC (06:15 in Jordan) - fresh prices before anyone is shopping.
+    - cron: '15 3 * * *'
   workflow_dispatch:
 
 permissions:

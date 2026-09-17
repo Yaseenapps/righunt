@@ -41,15 +41,15 @@ createServer(async (req, res) => {
   } catch {
     // The site uses real paths like /products/gpu, which are not files.
     // Anything that is not an asset request gets the app shell, and the
-    // router works out what to show. Matches how GitHub Pages serves 404.html.
+    // router works out what to show - the same as Cloudflare Pages does.
     const wantsFile = /\.[a-z0-9]+$/i.test(new URL(req.url, 'http://localhost').pathname);
     if (!wantsFile) {
       try {
-        // 404.html, not index.html: it is the shell that loads its assets
-        // from the site root, which is the only one that works from a deep
-        // path. Serving it here means local development exercises exactly
+        // index.html loads its assets from the site root, so it works from
+        // any depth, and Cloudflare serves it for every address that is not
+        // a file. Serving it here means local development exercises exactly
         // what visitors to a shared link will get.
-        const shell = await readFile(join(ROOT, '404.html'));
+        const shell = await readFile(join(ROOT, 'index.html'));
         res.writeHead(200, { 'Content-Type': TYPES['.html'], 'Cache-Control': 'no-cache' });
         return res.end(shell);
       } catch { /* fall through to 404 */ }

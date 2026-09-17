@@ -309,7 +309,11 @@ export async function browse(subId, qs, navigate) {
     const opts = facet.options.filter((o) => (counts.get(o.value) || 0) > 0 || active.includes(o.value));
     if (opts.length < 2) return null;
 
-    const total = [...counts.values()].reduce((a, b) => a + b, 0);
+    // Everything "All" would show - including listings the shop never gave a
+    // value for. Summing the buttons left those out, so "All 137" opened a
+    // page of 147.
+    const matchOthers = makeMatcher(f, key);
+    const total = all.filter((p) => matchOthers(p)).length;
     return el('div', { class: 'steps' },
       button('All', [], active.length === 0, total),
       ...opts.map((o) => button(o.value, [o.value], active.includes(o.value), counts.get(o.value) || 0)),

@@ -9,12 +9,13 @@ export const storeOf = (id) => STORES.get(id) || { name: id, color: '#888', base
 const HEART = '<svg viewBox="0 0 24 24"><path d="M20.6 13.4 12 22l-8.6-8.6a5 5 0 0 1 0-7 5 5 0 0 1 7 0l1.6 1.6 1.6-1.6a5 5 0 0 1 7 0 5 5 0 0 1 0 7Z"/></svg>';
 
 export function saveButton(product) {
+  const saved = store.isSaved(product.id);
   const btn = el('button', {
     class: 'save-btn',
     type: 'button',
-    'aria-pressed': store.isSaved(product.id) ? 'true' : 'false',
-    'aria-label': 'Save this product',
-    title: 'Save',
+    'aria-pressed': saved ? 'true' : 'false',
+    'aria-label': saved ? 'Remove from saved' : 'Save this product',
+    title: saved ? 'Saved' : 'Save',
     html: HEART,
   });
   btn.addEventListener('click', (e) => {
@@ -22,7 +23,9 @@ export function saveButton(product) {
     e.stopPropagation();
     const now = store.toggleSave(product);
     btn.setAttribute('aria-pressed', now ? 'true' : 'false');
-    toast(now ? 'Saved — kept in this browser' : 'Removed from saved');
+    btn.setAttribute('aria-label', now ? 'Remove from saved' : 'Save this product');
+    btn.title = now ? 'Saved' : 'Save';
+    toast(now ? 'Saved' : 'Removed from saved');
   });
   return btn;
 }
@@ -96,13 +99,20 @@ export function rail(products) {
   return el('div', { class: 'rail-wrap' }, prev, track, next);
 }
 
-export function section(title, subtitle, body, link) {
+/**
+ * A titled block.
+ *
+ * The subtitle is deliberately gone. Every section used to carry a line
+ * explaining itself - "Pick what you need, then narrow it down by spec" under
+ * "Shop by category" - and a heading that has to be explained is usually a
+ * heading doing its job badly. Repeated down a page it is also the single
+ * clearest tell of a page nobody wrote by hand, which a shop told us to our
+ * face. The heading says it; the products say the rest.
+ */
+export function section(title, body, link) {
   return el('section', { class: 'section' },
     el('div', { class: 'section-head' },
-      el('div', {},
-        el('h2', {}, title),
-        subtitle ? el('p', {}, subtitle) : null,
-      ),
+      el('h2', {}, title),
       link ? el('a', { href: link.href }, link.text) : null,
     ),
     body,

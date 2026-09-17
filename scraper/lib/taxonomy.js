@@ -188,7 +188,14 @@ const RULES = [
       /\bmagnetic\s+case\b/i, /\bphone\s+(case|cover|holder)\b/i,
       /\baction\s+figure\b/i, /\bfunko\b/i, /\bamiibo\b/i, /\bbackpack\b/i, /\b(laptop|camera)\s+bag\b/i,
     ],
-    no: [/\bmonitor\b/i, /\bgaming\s+chair\b/i, /\bprinter\s+cable\b/i],
+    // "ARCTIC Freezer 36 A-RGB CPU Cooler" is not a kitchen freezer.
+    // Device names veto it, because gaming gear describes itself with the same
+    // words: "Razer Cobra Pro Wireless Gaming Mouse ... Up to 170 Hr Battery"
+    // and "AORUS Liquid Cooler 360 with Circular LCD Display" were both hidden,
+    // along with every other wireless mouse and headset that quoted its
+    // battery life. Tablet and phone keyboards still count as other.
+    no: [/\bmonitor\b/i, /\bgaming\s+chair\b/i, /\bprinter\s+cable\b/i, /\bcpu\b/i, /\ba-?rgb\b/i,
+      /^(?!.*\b(ipad|iphone|phone|tablet|galaxy\s+tab|smart\s*watch|power\s*bank|laptop|notebook|folio)\b).*\b(mouse|mice|keyboard|head\s*sets?|headphones?|earbuds?|controller|gamepad|microphone|webcam|coolers?|aio)\b/i],
   },
 
   { sub: 'chair', yes: [/\bchairs?\b/i, /\bgaming\s+seat\b/i], no: [/\barmrests?\b/i, /\bpads?\b/i, /\bcovers?\b/i, /\bcasters?\b/i, /\bwheels?\b/i, /\bcushions?\b/i, /\bmats?\b/i] },
@@ -196,7 +203,7 @@ const RULES = [
     sub: 'desk',
     yes: [/\bgaming\s+(desk|table)\b/i, /\bdesks?\b/i, /\bcomputer\s+table\b/i],
     // "for desk" marks a desk accessory, not a desk.
-    no: [/\bfor\s+desk\b/i, /\bdesktop\b/i, /\bmats?\b/i, /\bpads?\b/i, /\blamps?\b/i, /\bmounts?\b/i, /\borganizers?\b/i, /\bholders?\b/i, /\bclips?\b/i, /\bstands?\b/i, /\bcables?\b/i, /\bplants?\b/i, /\bfans?\b/i, /\bcontrollers?\b/i, /\bknobs?\b/i, /\bclamps?\b/i, /\bspeakers?\b/i],
+    no: [/\bfor\s+desk\b/i, /\bdesktop\b/i, /\bmats?\b/i, /\bpads?\b/i, /\blamps?\b/i, /\bmounts?\b/i, /\borganizers?\b/i, /^(?!.*\bgaming\s+(desk|table)\b).*\bholders?\b/i, /\bclips?\b/i, /\bstands?\b/i, /^(?!.*\bgaming\s+(desk|table)\b).*\bcables?\b/i, /\bplants?\b/i, /\bfans?\b/i, /\bcontrollers?\b/i, /\bknobs?\b/i, /\bclamps?\b/i, /\bspeakers?\b/i],
   },
 
   { sub: 'mousepad', yes: [/\bmouse\s*pads?\b/i, /\bmousepads?\b/i, /\bdesk\s*(mat|pad)s?\b/i] },
@@ -260,6 +267,8 @@ const RULES = [
       /\bmother\s*board\b/i, /\bmainboard\b/i, /\bmobo\b/i, /\b(LGA\s?\d{4}|AM[45])\s+socket\b/i,
       /\b[ZBHXA]\d{3}[A-Z]?\s*M?\b(?=[\s\S]*\b(ddr[345]|atx|lga|am[45]|socket|wifi|chipset)\b)/i,
     ],
+    // A case lists the boards it takes: "ATX Mid Tower ... motherboard support".
+    no: [/\b(mid|full|mini)[\s-]?tower\b/i, /\bcases?\b/i, /\bchassis\b/i],
   },
   {
     sub: 'ram',
@@ -320,7 +329,8 @@ const RULES = [
 
   // Accessories.
   { sub: 'external-storage', yes: [/\bexternal\s+(ssd|hdd|drive|storage)\b/i, /\bportable\s+(ssd|hdd|drive)\b/i, /\bflash\s+(drive|disk|memory)\b/i, /\busb\s+(drive|stick)\b/i, /\bmemory\s+card\b/i, /\bmicro\s*sd\b/i, /\benclosure\b/i] },
-  { sub: 'networking', yes: [/\brouter\b/i, /\bwi[\s-]?fi\b/i, /\bethernet\b/i, /\bnetwork\b/i, /\bmesh\b/i, /\bextender\b/i, /\baccess\s+point\b/i, /\b(gigabit|poe|managed|unmanaged|rack|kvm|\d+[\s-]?port)\b.{0,30}\bswitch\b/i, /\bswitch\b.{0,30}\b(gigabit|poe|ports?|rj-?45|uplink)\b/i] },
+  // A case with a "mesh panel" and a board with "Wi-Fi" are not network kit.
+  { sub: 'networking', no: [/\bcases?\b/i, /\bchassis\b/i, /\bmotherboards?\b/i, /\bheadsets?\b/i, /\bgraphics?\s+card\b/i], yes: [/\brouter\b/i, /\bwi[\s-]?fi\b/i, /\bethernet\b/i, /\bnetwork\b/i, /\bmesh\b/i, /\bextender\b/i, /\baccess\s+point\b/i, /\b(gigabit|poe|managed|unmanaged|rack|kvm|\d+[\s-]?port)\b.{0,30}\bswitch\b/i, /\bswitch\b.{0,30}\b(gigabit|poe|ports?|rj-?45|uplink)\b/i] },
   { sub: 'cables', yes: [/\bcable\b/i, /\badapter\b/i, /\bhub\b/i, /\bdock(ing)?\b/i, /\bconverter\b/i, /\bhdmi\b/i, /\bdisplay\s*port\b/i, /\bextension\b/i] },
   { sub: 'power', yes: [/\bups\b/i, /\bpower\s*bank\b/i, /\bcharger\b/i, /\bsurge\b/i, /\bpower\s*(socket|strip)\b/i, /\bstabilizer\b/i] },
 ];
@@ -557,7 +567,7 @@ const PERIPHERAL_SUBS = new Set([
 
 const CONNECTIVITY_ACCESSORY = new RegExp([
   'adapt[oe]rs?', 'converters?', 'splitters?',
-  'extension\\s+(cable|cord|lead)s?',
+  'extension\\s+((male|female)\\s+)?(cable|cord|lead)s?', '(usb-?c|type-?c|lightning)\\s+to\\s+3\\.5\\s*mm',
   'charging\\s+(cable|dock|station|stand)s?',
   '(data|aux|out|audio|type-?c)\\s+cables?',
   '(boom|microphone|mic)\\s+arms?',
@@ -631,8 +641,20 @@ export function sanitize(sub, title, specs) {
   // accessory, it does not matter which component it names. "ARGB light
   // strip for motherboard" is lighting; "enclosure external case" is an
   // enclosure; "cable clip for desk" is a clip.
-  if (ACCESSORY_NOUNS.test(t)) return 'other';
-  if (ACCESSORY_PRONE.has(sub) && /\b(arms?|mounts?|brackets?|risers?|stands?|holders?|connectors?|screws?|standoffs?|adapt[oe]rs?)\b/i.test(t)) {
+  // A keyboard that describes its own switches or keycaps is still a
+  // keyboard: "BlackWidow V3 Pro mechanical wireless gaming keyboard: green
+  // mechanical switches" was being hidden as a bag of loose switches.
+  const keyboardDescribingItself = sub === 'keyboard' && /\bkeyboards?\b/i.test(t)
+    && !/\b(pullers?|removers?|testers?|lube|openers?|for\s+(mechanical\s+)?keyboards?|keycaps?\s+set)\b/i.test(t);
+  // Only the part of the title before "with" says what is being sold. After
+  // it comes what is included: "Gaming Case w/ 4x120mm Fans, Adjustable
+  // Motherboard Position Bracket" is a case, and "Gaming Desk with Headphone
+  // Hook and Cup Holder" is a desk.
+  // The same goes for a list of features after a comma: "Gaming Desk RGB,
+  // P2 Carbon Fiber, Cable Management Features" is a desk.
+  const sold = ` ${String(title).split(/\s(?:with|w\/|includes?|including|\+)\s|,\s/i)[0]} `;
+  if (ACCESSORY_NOUNS.test(sold) && !keyboardDescribingItself) return 'other';
+  if (ACCESSORY_PRONE.has(sub) && /\b(arms?|mounts?|brackets?|risers?|stands?|holders?|connectors?|screws?|standoffs?|adapt[oe]rs?)\b/i.test(sold)) {
     return 'other';
   }
 
@@ -640,7 +662,9 @@ export function sanitize(sub, title, specs) {
   // into. Note there is no bare "cable" here on purpose: "Keyboard K100 -
   // 1.5m cable length" and "wired controller - 2.5M cable" are real products
   // describing their own lead.
-  if (PERIPHERAL_SUBS.has(sub) && CONNECTIVITY_ACCESSORY.test(t)) return 'other';
+  // A "USB/XLR Dynamic Microphone" names its own connectors; it is not a lead.
+  const ownConnectors = /\b(usb\s*[\/&+]\s*xlr|xlr\s*[\/&+]\s*usb)\b/i.test(sold) && /\b(microphones?|mics?)\b/i.test(sold);
+  if (PERIPHERAL_SUBS.has(sub) && CONNECTIVITY_ACCESSORY.test(sold) && !ownConnectors) return 'other';
 
   // No graphics card lists a processor, and no processor lists a graphics
   // card. A title naming both is a complete machine sold as a spec list -
@@ -670,7 +694,10 @@ export function sanitize(sub, title, specs) {
   // Prestige laptops - so a machine has to name a processor or call itself a
   // laptop as well. Without that, the monitor was moved into Gaming Laptops
   // and back again on every refresh.
-  const namesItself = /\b(graphics?\s+cards?|video\s+cards?|motherboards?|power\s+supply|memory\s+module)\b/i.test(t);
+  // A board named by its chipset names itself too: "ASUS ROG Strix X670E-F
+  // Gaming WIFI DDR5 AM5 Ryzen 7000" was sent to laptops for saying Ryzen.
+  const namesItself = /\b(graphics?\s+cards?|video\s+cards?|motherboards?|power\s+supply|memory\s+module)\b/i.test(t)
+    || (/\b[zbhxa][4-9]\d0e?(-[a-z0-9]+)?\b/i.test(t) && /\b(am[45]|lga\s?\d{4}|ddr[45]|pcie|m\.2)\b/i.test(t));
   // A processor MODEL, not a chip maker's name: "XFX Swift AMD Radeon RX
   // 9060 XT" says AMD, and counting that as evidence of a computer sent every
   // one of those cards into Gaming Laptops.
@@ -699,21 +726,33 @@ export function sanitize(sub, title, specs) {
       return keep(!!specs.ddr || /\bdimm\b|\bddr[345]\b|\bram\b|\bmemory\s+module\b/i.test(t));
     case 'gpu':
       // A bare "GPU" is not enough - it is usually a compatibility note.
+      // A case's title lists the graphics card length it fits, and that put
+      // an "ASUS A23 Plus Computer Case" among the graphics cards.
+      if (!specs.chipset && /\b(computer|pc|gaming|atx|tower)\s+case\b|\bchassis\b|\b(mid|full)[\s-]?tower\b/i.test(t)) return 'case';
       return keep(!!specs.chipset || /\bgraphics?\s+card\b|\bvideo\s+card\b|\bvga\s+card\b/i.test(t));
     case 'psu':
       // "PoE Injector - 15.4W Power Supply" powers a network camera, not a PC.
       if (/\bpoe\b|\binjectors?\b|\bups\b|\bpower\s*banks?\b|\bsurge\b|\badapt[oe]rs?\b/i.test(t)) return 'other';
+      // A case listing where its power supply goes is a case.
+      if (/\b(mid|full|mini)[\s-]?tower\b|\bgaming\s+case\b|\bchassis\b/i.test(t) && !/\b\d{3,4}\s*w\b/i.test(t)) return 'case';
       return keep(!!specs.wattage || /\bpower\s*supply\b|\bpsu\b|\b80\s*plus\b/i.test(t));
     case 'cpu':
       // A CPU cooler's spec sheet lists the processor sockets it fits, which
       // reads exactly like a processor's own. Those are coolers, not CPUs,
       // and they belong in Cooling rather than being thrown away.
-      if (/\b(fans?|coolers?|cooling|heat\s*sinks?|radiators?|water\s*block)\b/i.test(t)) return 'cooling';
-      return keep(!!specs.series || !!specs.socket || /\bprocessor\b|\bcpu\b/i.test(t));
+      if (/\b(fans?|coolers?|cooling|heat\s*sinks?|radiators?|water|aio|liquid)\b/i.test(t)) return 'cooling';
+      // A socket alone is not enough: that is exactly what a cooler lists.
+      return keep(!!specs.series || /\b(processor|cpu|ryzen|core\s*(i[3579]|ultra)|xeon|pentium|celeron|athlon|threadripper)\b/i.test(t));
     case 'motherboard':
       // Fans and coolers reach this category through shop category paths.
-      if (/\bfans?\b|\bcoolers?\b|\bcooling\b|\bradiators?\b/i.test(t)) return 'other';
-      return keep(/\bmother\s*board\b|\bmainboard\b|\bmobo\b|\b(lga\s?\d{4}|am[45])\b/i.test(t));
+      // Unless the board itself is named - "X670E-F ... w/ Heatsinks AI
+      // Cooling II" is ASUS describing its own board.
+      if (/\bfans?\b|\bcoolers?\b|\bcooling\b|\bradiators?\b/i.test(t)
+          && !(/\b[zbhxa][4-9]\d0e?(-[a-z0-9]+)?\b/i.test(t) && /\b(am[45]|lga\s?\d{4}|ddr[45])\b/i.test(t))) return 'other';
+      // Boards are often named by chipset and nothing else: "ASUS Prime
+      // Z790-P WiFi 6E DDR5 Intel 13th & 12th Gen".
+      return keep(/\bmother\s*board\b|\bmainboard\b|\bmobo\b|\b(lga\s?\d{4}|am[45])\b/i.test(t)
+        || (/\b[zbhxa][4-9]\d0[a-z]?(-[a-z0-9]+)?\b/i.test(t) && /\b(ddr[45]|wi-?fi|atx|intel|amd|gen)\b/i.test(t)));
     case 'monitor':
       // A handheld console has a screen and a refresh rate; it is not a
       // monitor. Neither is a phone or a tablet.
@@ -750,7 +789,7 @@ export function sanitize(sub, title, specs) {
         return 'cpu';
       }
       if (/\bkeypads?\b|\bstream\s+(controller|deck)\b/i.test(t)) return 'other';
-      return keep(/\bpc\b|\bdesktop\b|\bsystem\b|\brig\b|\btower\b|\bbuild\b/i.test(t));
+      return keep(/\bpcs?\b|\bdesktop\b|\bsystem\b|\brig\b|\btower\b|\bbuild\b/i.test(t));
     case 'gaming-laptop':
       // A product that describes itself as a component is that component,
       // whatever laptop family its brand name collides with. The XFX Swift
@@ -891,11 +930,13 @@ export function sanitize(sub, title, specs) {
     case 'controller':
       // The grips, charging kits and thumbstick caps sold for a controller
       // are not controllers.
-      if (/\b\w*grips?\b|\bcharge\s+(and|&)\s+play\b|\bcharging\s+(kit|dock|station)\b|\bfreek\b|\bthumb\s*sticks?\b|\bskins?\b|\bshells?\b|\bbattery\s+packs?\b|\bfire\s*stick\b|\btriggers?\b/i.test(t)) return 'other';
+      if (/\b\w*grips?\b|\bcharge\s+(and|&)\s+play\b|\bcharging\s+(kit|dock|station)\b|\bfreek\b|\bthumb\s*sticks?\b|\bskins?\b|\bshells?\b|\bbattery\s+packs?\b|\bfire\s*stick\b|\btriggers?\s+(stops?|extenders?|grips?|covers?|caps?)\b/i.test(t)) return 'other';
       return keep(/\b(controller|game\s*pad|gamepad|joy\s*stick|joy-?con|dualsense|dualshock|racing\s+wheel|steering\s+wheel|flight\s+stick|pedals?)\b/i.test(t));
     case 'microphone':
       // The things a microphone sits on or in front of are not microphones.
-      if (/\b(stands?|arms?|booms?|mounts?|holders?|pop\s*filters?|shock\s*mounts?|wind\s*screens?|foams?|clips?)\b/i.test(t)) return 'other';
+      // ...unless it is a microphone that comes with one: "Gaming Microphone
+      // with Desk Stand".
+      if (/\b(stands?|arms?|booms?|mounts?|holders?|pop\s*filters?|shock\s*mounts?|wind\s*screens?|foams?|clips?|tripods?|suspension)\b/i.test(sold)) return 'other';
       // A karaoke machine is a party speaker, and a spare mic for a headset
       // is a spare part.
       if (/\bkaraoke\b/i.test(t)) return 'other';
@@ -946,6 +987,12 @@ export function detectBrand(title, vendorHint = '') {
  * so the UI can say "not specified" rather than guess.
  */
 export function extractSpecs(sub, title, description = '') {
+  // Trademark signs go first. Shops write "GeForce RTX™ 5070", and with the
+  // sign between the name and the number no pattern below saw a chipset - so
+  // real RTX 5070 Ti and 5080 cards sat in the catalogue unrecognised, missing
+  // from every chipset filter and from every build.
+  title = String(title || '').replace(/[™®©]/g, ' ');
+  description = String(description || '').replace(/[™®©]/g, ' ');
   const T = `${title} ${description}`.replace(/\s+/g, ' ');
   const s = {};
   const has = (re) => re.test(T);
@@ -1225,4 +1272,130 @@ export function extractSpecs(sub, title, description = '') {
   if (col) s.color = col[1][0].toUpperCase() + col[1].slice(1).toLowerCase();
 
   return s;
+}
+
+/* ---------------------------------------------------------------------------
+ * The shop's own label, when it is a gaming one
+ *
+ * Shopify shops file every product under a type - iGeek's are "Console Game",
+ * "Controller", "Keyboard", "Simulators", "Virtual Reality (VR)". The rules
+ * above read titles, and a title often never says what the thing is: "Ghost
+ * of Yotei PlayStation 5 (PS5)" does not say "game", "ATTACK SHARK X85
+ * WIRELESS JADE SWITCH" does not say "keyboard", and "MOZA RS065 Multi-
+ * function Stalks" does not say anything a rule could recognise. Every one of
+ * those was hidden - 228 PS5 and Switch games from one shop alone, plus its
+ * keyboards, mice, microphones, racing simulators and VR headsets.
+ *
+ * So a gaming label from the shop is trusted - provided the title does not
+ * plainly contradict it (a tablet filed under Keyboard is still a tablet).
+ * ------------------------------------------------------------------------ */
+
+const NOT_GAMING_DEVICE = /\b(tablet|ipad|folio|smart\s*watch|phone|printer|projector|power\s*bank|router|tv\b|television|lamp)\b/i;
+const PLATFORM = /\b(ps[345]|playstation|xbox|nintendo|switch\s*2?|steam\s*deck|pc\s+game|game\s*cube)\b/i;
+
+// Checked against the shop's product type first, then its collection or
+// category names ("Gaming Mouse", "Racing Simulators Collection",
+// "PlayStation / Playstation Games"). First match wins, so the specific
+// labels come before the general ones.
+const SHOP_TYPES = [
+  [/\b(console|video|playstation|ps[345]|xbox|nintendo|switch)\s*games?\b|^games?$/i, 'video-game'],
+  [/\b(simulators?|sim\s*racing|racing\s*(wheels?|simulators?|collection)|^racing$|flight\s*sim)/i, 'controller'],
+  [/\b(virtual\s*reality|vr\s*headsets?|^vr$)/i, 'console'],
+  [/\b(playstation|xbox|nintendo|console|switch)\s+(headsets?\s*&\s*)?accessor(y|ies)\b|\bconsole\s*accessor/i, 'console-accessory'],
+  [/\b(controllers?|gamepads?)\b/i, 'controller'],
+  [/\b(portable\s*devices?|handhelds?|retro(\s*gaming)?|consoles?)\b/i, 'console'],
+  [/\bkeyboards?\b/i, 'keyboard'],
+  [/\b(mouse('?s)?|mice)\b/i, 'mouse'],
+  [/\b(headsets?|headphones?)\b/i, 'headset'],
+  [/\b(microphones?|mics?)\b/i, 'microphone'],
+  [/\bmonitors?\b/i, 'monitor'],
+  [/^(cases?|pc\s*cases?)$/i, 'case'],
+  [/\b(gaming\s*furniture|gaming\s*chairs?|gaming\s*desks?)\b/i, 'furniture'],
+];
+
+/**
+ * The category a shop's own gaming label points to, if the title agrees with
+ * it well enough to trust. Null when there is no such label or the title
+ * says otherwise.
+ */
+export function shopTypeSub(productType, title, price = 0, storePath = '') {
+  const labels = [String(productType || '').trim(), ...String(storePath || '').split(/s*[/|]s*/)]
+    .map((l) => l.trim()).filter(Boolean);
+  if (!labels.length) return null;
+  let hit = null;
+  for (const label of labels) {
+    hit = SHOP_TYPES.find(([re]) => re.test(label));
+    if (hit) break;
+  }
+  if (!hit) return null;
+  const t = ` ${title} `;
+  let sub = hit[1];
+
+  if (NOT_GAMING_DEVICE.test(t) && !/\b(quest|psvr|vr)\b/i.test(t)) return null;
+  // Keyboards describe their own switches and keycaps - "BlackWidow V3 Mini
+  // 65% Wireless Mechanical Yellow Switches" is a keyboard, not a switch set.
+  const keyboardSelf = sub === 'keyboard' && !/\b(pullers?|removers?|testers?|lube|openers?|keycaps?\s+(set|only)|\d+\s*keycaps?)\b/i.test(t);
+  if (ACCESSORY_NOUNS.test(t) && sub !== 'video-game' && !keyboardSelf) return null;
+
+  switch (sub) {
+    case 'video-game':
+      // A game names its platform. Stands, cases and figures sold under the
+      // same label are not games.
+      if (!PLATFORM.test(t)) return null;
+      if (/\b(stands?|covers?|skins?|figures?|figurines?|amiibo|plush|pouch|holders?|chargers?|docks?|controllers?|kontrol|freek|thumb\s*sticks?|grips?)\b/i.test(t)) return null;
+      return sub;
+    case 'console':
+      // A strap for a Quest, or a charging dock "for PS5", is an accessory.
+      if (/\bfor\s+(the\s+)?(ps[45]|playstation|xbox|nintendo|switch|meta\s+quest|oculus|quest)\b/i.test(t)
+          || /\b(straps?|docks?|stands?|covers?|cases?|chargers?|grips?|fit\s*pack|facial\s+interface|adapt[oe]rs?)\b/i.test(t)) {
+        return 'console-accessory';
+      }
+      if (price < 25) return 'console-accessory';
+      return sub;
+    case 'console-accessory':
+      // "HyperX Cloud Flight wireless gaming headset for PS5" sits in a
+      // PlayStation accessories aisle and is a headset.
+      if (/\bhead\s*sets?\b|\bheadphones?\b/i.test(t) && !/\b(stands?|holders?|hangers?|cases?|cushions?|pads?)\b/i.test(t)) return 'headset';
+      if (/\b(controller|gamepad|dualsense|dualshock|joy-?cons?)\b/i.test(t) && !/\b(charg|dock|grip|stand|case|cover|skin|holder|battery)\w*/i.test(t)) return 'controller';
+      return sub;
+    case 'controller':
+      // Racing wheels, pedals, shifters, yokes, throttles, stalks and the
+      // bases and cockpits they mount on - all things a simulator is played
+      // with. The small spares and clamps are accessories.
+      if (price < 20) return null;
+      return sub;
+    case 'keyboard':
+      if (/\b(mouse|mice|headsets?)\b/i.test(t) && !/\bkeyboard\b/i.test(t)) return null;
+      return sub;
+    case 'mouse':
+      if (/\b(head\s*sets?|headphones?|kraken|keyboards?|drivers)\b/i.test(t) && !/\bmouse\b/i.test(t)) return null;
+      return sub;
+    case 'case':
+      return /\b(case|tower|chassis|atx)\b/i.test(t) ? sub : null;
+    case 'furniture':
+      if (/\bchairs?\b|\bseats?\b/i.test(t)) return 'chair';
+      if (/\b(desks?|tables?|work\s*station)\b/i.test(t) && !/\b(lamp|pool|football|top\s+pool)\b/i.test(t)) return 'desk';
+      return null;
+    default:
+      return sub;
+  }
+}
+
+/**
+ * Gaming products a title gives away on its own, for listings every other
+ * rule has lost. "Assassin's Creed Black Flag Resynced - PlayStation 5 (PS5)"
+ * carries no product type and never says "game"; the platform at the end of
+ * the name is how shops write a game.
+ */
+export function gamingByTitle(title, price = 0) {
+  const t = ` ${title} `;
+  if (/\bamiibo\b/i.test(t)) return 'console-accessory';
+  if (/\b(game\s*capture|capture\s*card)\b/i.test(t)) return 'webcam';
+  const platformSuffix = /[-–(|,]\s*(play\s*station\s*[345]|ps[345]|nintendo\s+switch(\s*2)?|switch\s*2|xbox\s+(series\s+[xs](\s*\|\s*[xs])?|one))\s*(\(\s*ps[345]\s*\)|edition)?\s*\)?\s*$/i;
+  if (platformSuffix.test(String(title).trim())
+      && price >= 5 && price <= 150
+      && !/\b(controllers?|consoles?|stands?|cases?|covers?|skins?|chargers?|docks?|grips?|headsets?|cables?|bags?|figures?|kontrol|freek|thumb\s*sticks?)\b/i.test(t)) {
+    return 'video-game';
+  }
+  return null;
 }

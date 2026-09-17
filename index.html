@@ -6,11 +6,30 @@
 <title>RIGHUNT — PC & Gaming Prices in Jordan</title>
 <meta name="description" content="Compare live prices on graphics cards, gaming PCs, monitors, keyboards and consoles from stores across Jordan. Free, no account.">
 <meta name="theme-color" content="#08080c">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23090910'/><path d='M26 74V26h30a14 14 0 0 1 0 28h-8l16 20H50L36 54v20z' fill='%23d8ff3f'/></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%231d4ed8'/><path d='M26 74V26h30a14 14 0 0 1 0 28h-8l16 20H50L36 54v20z' fill='%23ffffff'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=Inter:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="assets/css/style.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+
+<!--
+  The one page shell for the whole site. Cloudflare Pages serves it for any
+  address that is not a real file - /products/gpu, /product/gpu/igeek-abc,
+  /saved - and the router works out what to show.
+
+  So the stylesheet and script are loaded from the site root, not with
+  relative paths: served at /products/gpu, "assets/js/app.js" would resolve
+  to /products/assets/js/app.js and the page would never load. The root is
+  "/" on our own domain, and "/<repo>/" on a github.io project page.
+-->
+<script>
+  (function () {
+    var root = /\.github\.io$/i.test(location.hostname)
+      ? '/' + location.pathname.split('/')[1] + '/'
+      : '/';
+    document.write('<link rel="stylesheet" href="' + root + 'assets/css/style.css">');
+    document.write('<script type="module" src="' + root + 'assets\/js\/app.js"><\/script>');
+  })();
+</script>
 </head>
 <body>
 
@@ -110,14 +129,22 @@
       <a class="foot-mail" href="mailto:yaseenalqudah3@gmail.com">yaseenalqudah3@gmail.com</a>
     </div>
   </div>
+  <div class="wrap foot-cta">
+    <a class="btn btn-about" href="about">About RIGHUNT</a>
+    <span>Who runs this, where the prices come from, and what is kept about you.</span>
+  </div>
   <div class="wrap foot-base">
-    <span>Free to use. No account, no sign-up, no tracking.</span>
-    <span>Prices in Jordanian dinar (JOD). Always confirm on the store's page before buying.</span>
+    <span>Free to use. No sign-up, no ads.</span>
+    <span>Prices in Jordanian dinar (JOD), as of the last update. Always confirm on the shop's page before buying.</span>
   </div>
 </footer>
 
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
-<script type="module" src="assets/js/app.js"></script>
+<noscript>
+  <p style="padding:24px;text-align:center">
+    This page needs JavaScript. <a href="/">Go to the home page</a>.
+  </p>
+</noscript>
 </body>
 </html>

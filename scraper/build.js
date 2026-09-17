@@ -406,7 +406,7 @@ const card = (p) => ({ id: p.id, sub: p.sub, title: p.title, brand: p.brand, pri
 /**
  * Keep a running summary of what each product has cost, so the site can say
  * "lowest we have seen" and flag a genuine drop. A summary rather than a full
- * time series, because 12,000 products times a reading every six hours would
+ * time series, because 12,000 products times a reading every day would
  * grow without bound; this stays a few hundred KB forever.
  */
 async function rollHistory(products) {
@@ -461,7 +461,7 @@ async function rollHistory(products) {
  *
  * A shop putting something back on the shelf is the one event a price
  * comparison site can spot and a shopper cannot - nobody refreshes eight
- * shops every six hours to see whether the card they want reappeared. So it
+ * shops every day to see whether the card they want reappeared. So it
  * gets its own page rather than being left for someone to stumble across.
  */
 function buildRestocked(products, history, days = 14) {

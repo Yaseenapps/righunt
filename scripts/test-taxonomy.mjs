@@ -8,6 +8,7 @@
 // Run with: node scripts/test-taxonomy.mjs
 import { classify, sanitize, extractSpecs, isHidden } from '../scraper/lib/taxonomy.js';
 import { parsePrice } from '../scraper/lib/text.js';
+import { normalize } from '../scraper/lib/normalize.js';
 
 const CASES = [
   // [expected sub, title, why it used to go wrong]
@@ -152,11 +153,33 @@ for (const [want, text] of PRICES) {
   if (got !== want) { failed++; console.log(`FAIL  price want ${want} got ${got}  from ${JSON.stringify(text)}`); }
 }
 
+// Whole listings through normalize(), with the shop's own product type -
+// the path real Shopify listings take. Every one of these was hidden, or
+// filed in the wrong aisle, before shop labels were trusted.
+const SHOP_LABELLED = [
+  // [expected sub, product type, title, price]
+  ['video-game', 'Console Game', 'Ghost of Yotei™ PlayStation 5 (PS5)', 49],
+  ['video-game', 'Console Game', 'Kirby Air Riders - Nintendo Switch 2', 59],
+  ['video-game', 'Console Game', "Death Stranding 2: On The Beach Collector's Edition - PlayStation 5", 299],
+  ['console', 'Portable Device', 'Nintendo Switch 2 Portable Game Console', 449],
+  ['console', 'Virtual Reality (VR)', 'Meta Quest 3 128GB— Breakthrough Mixed Reality', 479],
+  ['console-accessory', 'Virtual Reality (VR)', 'HBV-456 Adjustable Head Strap For Meta Quest 3', 19],
+  ['controller', 'Simulators', 'MOZA RS065 Multi-function Stalks', 219],
+  ['controller', 'Simulators', 'MOZA R5 Racing Wheel and Pedals for PC- RS20', 399],
+  ['keyboard', 'Keyboard', 'ATTACK SHARK X85 WIRELESS  White Purple JADE SWITCH', 55],
+  ['console-accessory', 'Accessories', 'DOBE Multi function Cooling Chargin Dock For PS5 SLIM/PRO', 20],
+];
+for (const [want, productType, title, price] of SHOP_LABELLED) {
+  const n = normalize({ sourceId: title, title, url: 'https://example.com/p', image: 'https://example.com/i.jpg', images: [], price, productType, inStock: true }, { id: 'test', name: 'Test' });
+  const got = n ? n.sub : 'dropped';
+  if (got !== want) { failed++; console.log(`FAIL  want ${want} got ${got}  (${productType})  ${title}`); }
+}
+
 // Hidden categories are the ones we deliberately do not show.
 for (const h of ['networking', 'cables', 'power', 'laptop', 'other']) {
   if (!isHidden(h)) { failed++; console.log(`FAIL  ${h} should be a hidden category`); }
 }
 
-const TOTAL = CASES.length + CAPACITIES.length + PRICES.length + 6;
+const TOTAL = CASES.length + CAPACITIES.length + PRICES.length + SHOP_LABELLED.length + 6;
 console.log(failed ? `\n${failed} of ${TOTAL} checks failed` : `\nALL PASS - ${TOTAL} checks`);
 process.exit(failed ? 1 : 0);

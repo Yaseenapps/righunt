@@ -44,7 +44,7 @@ export async function product(subId, productId) {
     gallery.append(thumbs);
   }
 
-  /* ---------- buy panel ---------- */
+  /* ---------- price and where to get it ---------- */
   const buy = el('div', {},
     p.brand ? el('div', { class: 'pdp-brand' }, p.brand) : null,
     el('h1', { class: 'pdp-title' }, p.title),
@@ -72,16 +72,18 @@ export async function product(subId, productId) {
         el('b', {}, p.social ? (p.social.seller ? `@${p.social.seller}` : s.name) : s.name),
         el('span', {}, p.social
           ? `Private seller on ${p.social.platform === 'facebook' ? 'Facebook' : 'Instagram'} — agree the details in the post`
-          : 'Sold and shipped by the store, not by us'),
+          : `Sold and delivered by ${s.name} — buy it on their website`),
       ),
     ),
 
+    // RIGHUNT does not sell anything. The way to buy is the shop's own page,
+    // so that is the main button; saving it here is the other.
     el('div', { class: 'buy-row' },
       el('a', {
         class: 'btn btn-primary btn-lg', href: p.url, target: '_blank', rel: 'noopener noreferrer',
       }, p.social
         ? `View post on ${p.social.platform === 'facebook' ? 'Facebook' : 'Instagram'}`
-        : `Buy at ${s.name}`,
+        : `Check at ${s.name}`,
         el('svg', { viewBox: '0 0 24 24', 'aria-hidden': 'true' })),
       saveToggle({ ...p, sub: realSub }),
     ),
@@ -163,7 +165,7 @@ export async function product(subId, productId) {
 
     el('div', { class: 'pdp' }, gallery, buy),
     ...blocks,
-    siblings.length ? section('Similar prices in this category', null, rail(siblings)) : null,
+    siblings.length ? section('Similar prices in this category', rail(siblings)) : null,
   );
 }
 
@@ -197,7 +199,7 @@ function saveToggle(p) {
   btn.addEventListener('click', () => {
     const now = store.toggleSave(p);
     btn.textContent = label();
-    toast(now ? 'Saved — kept in this browser' : 'Removed from saved');
+    toast(now ? 'Saved' : 'Removed from saved');
   });
   return btn;
 }

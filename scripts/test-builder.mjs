@@ -1,6 +1,7 @@
 // Checks the assistant's engine against the real catalogue.
 import { readFileSync } from 'node:fs';
-import { parseQuestion, buildPC, pick, floorPrice, checkCompatibility } from '../assets/js/lib/builder.js';
+import { parseQuestion, buildPC, pick, floorPrice, checkCompatibility, gpuClass, capability, fitsSlot } from '../assets/js/lib/builder.js';
+import { changePart, rebudget, describeChanges } from '../assets/js/lib/swap.js';
 
 const { products } = JSON.parse(readFileSync(new URL('../data/builder.json', import.meta.url), 'utf8'));
 const M = (n) => Math.round(n);
@@ -198,6 +199,76 @@ ok(withScreen.parts.some((x) => x.sub === 'monitor'), 'the build includes a moni
 ok(withScreen.total <= q.budget, `still inside the budget (${Math.round(withScreen.total)} of ${q.budget})`);
 const noScreen = buildPC(products, q.budget);
 ok(!noScreen.parts.some((x) => x.sub === 'monitor'), 'and no monitor when none was asked for');
+
+/* --------------------------------------------------------------------------
+ * Changing one part of a build leaves the rest alone.
+ *
+ * Reported from the site: a build came back with an i7, the shopper asked for
+ * a better graphics card, and the next build had the better card - and a
+ * worse processor. Asked to change one thing, nothing else may move except
+ * what the machine cannot work without (a bigger supply for a hungrier card,
+ * a new board for a processor on another socket).
+ * ----------------------------------------------------------------------- */
+console.log('\n--- changing one part keeps the others ---');
+
+const base = buildPC(products, 1000);
+const idsOf = (parts) => Object.fromEntries(parts.map((p) => [p.sub, p.product.id]));
+const baseIds = idsOf(base.parts);
+const ALLOWED_ALONGSIDE = { gpu: ['psu'], cpu: ['motherboard', 'ram'] };
+
+for (const [sub, direction] of [['gpu', 'better'], ['gpu', 'cheaper'], ['cpu', 'better'], ['cpu', 'cheaper'],
+  ['ram', 'better'], ['storage', 'better'], ['psu', 'better'], ['case', 'better'], ['cooling', 'better']]) {
+  const r = changePart(products, base.parts, sub, { direction });
+  if (!r.ok) { console.log(`   (no ${direction} ${sub}: ${r.reason})`); continue; }
+  const after = idsOf(r.parts);
+  const moved = Object.keys(baseIds).filter((k) => baseIds[k] !== after[k]);
+  const stray = moved.filter((k) => k !== sub && !(ALLOWED_ALONGSIDE[sub] || []).includes(k));
+  ok(moved.includes(sub), `${direction} ${sub}: the ${sub} changed (${describeChanges(r.changed)})`);
+  ok(!stray.length, `${direction} ${sub}: nothing else moved${stray.length ? ` (also ${stray.join(', ')})` : ''}`);
+  ok(!r.problems.length, `${direction} ${sub}: still fits together${r.problems.length ? ` (${r.problems.join('; ')})` : ''}`);
+  const was = base.parts.find((p) => p.sub === sub).product;
+  const now = r.parts.find((p) => p.sub === sub).product;
+  if (sub === 'gpu') {
+    ok(direction === 'better' ? gpuClass(now.specs) > gpuClass(was.specs) : gpuClass(now.specs) < gpuClass(was.specs),
+      `${direction} gpu: ${was.specs.chipset} -> ${now.specs.chipset} is really ${direction === 'better' ? 'faster' : 'slower'}`);
+  }
+}
+
+// The exact case from the report: better card, twice, and the processor stays.
+let chain = base;
+const cpuId = baseIds.cpu;
+for (let i = 1; i <= 2; i++) {
+  const r = changePart(products, chain.parts, 'gpu', { direction: 'better' });
+  if (!r.ok) break;
+  ok(idsOf(r.parts).cpu === cpuId, `better graphics card, ${i}x: same processor as the original build`);
+  chain = r;
+}
+
+// Naming a card swaps in that card, and only that card.
+const named = changePart(products, base.parts, 'gpu', { chipset: 'RX 9060 XT' });
+if (named.ok) {
+  ok(String(named.parts.find((p) => p.sub === 'gpu').product.specs.chipset).toUpperCase() === 'RX 9060 XT', 'a named card is the card used');
+  ok(idsOf(named.parts).cpu === cpuId && idsOf(named.parts).ram === baseIds.ram, 'naming a card keeps processor and memory');
+}
+
+// More money only ever buys upgrades to what is there.
+const richer = rebudget(products, base.parts, 1400);
+ok(richer && richer.total <= 1400, `more budget stays within it (${Math.round(richer?.total || 0)})`);
+if (richer) {
+  const weaker = richer.parts.filter((p) => {
+    const was = base.parts.find((x) => x.sub === p.sub)?.product;
+    return was && p.product.id !== was.id && capability(p.sub, p.product) < capability(p.sub, was);
+  });
+  ok(!weaker.length, `more budget never downgrades a part${weaker.length ? ` (${weaker.map((p) => p.sub).join(', ')})` : ''}`);
+}
+
+// What a build must be made of.
+for (const budget of [700, 1000, 1500]) {
+  const b = buildPC(products, budget);
+  if (!b.ok) continue;
+  ok(b.parts.every((p) => p.sub === 'monitor' || fitsSlot(p.product)),
+    `${budget} JOD: every part is really that part (${b.parts.filter((p) => !fitsSlot(p.product)).map((p) => p.product.title.slice(0, 30)).join('; ') || 'ok'})`);
+}
 
 console.log(fails ? `\n${fails} FAILED` : '\nALL PASS');
 process.exit(fails ? 1 : 0);
