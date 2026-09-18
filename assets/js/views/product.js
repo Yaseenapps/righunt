@@ -194,12 +194,12 @@ function priceHistoryNote(h) {
 }
 
 function saveToggle(p) {
-  const label = () => (store.isSaved(p.id) ? 'Saved' : 'Save');
+  const label = () => (store.isSaved(p.id) ? 'In wishlist' : 'Add to wishlist');
   const btn = el('button', { class: 'btn btn-lg', type: 'button' }, label());
   btn.addEventListener('click', () => {
     const now = store.toggleSave(p);
     btn.textContent = label();
-    toast(now ? 'Saved' : 'Removed from saved');
+    toast(now ? 'Added to your wishlist' : 'Removed from your wishlist');
   });
   return btn;
 }

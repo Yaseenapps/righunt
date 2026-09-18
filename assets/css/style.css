@@ -753,3 +753,61 @@ html[data-theme="dark"] .fopt input { accent-color: var(--volt-fill); }
   outline-offset: 2px;
   border-radius: 6px;
 }
+
+/* ============================================================
+   the rail that follows you down the page
+   ============================================================ */
+
+/* Appears once the header has scrolled away, so the way to another category
+   is never a scroll back to the top. Icons only until you point at it, so it
+   costs 56px of a wide screen and nothing on a narrow one. */
+.rail-nav {
+  position: fixed; inset-inline-start: 0; top: 50%; transform: translate(-110%, -50%);
+  z-index: 65; display: none; flex-direction: column; gap: 2px;
+  padding: 8px; border: 1px solid var(--line); border-inline-start: 0;
+  border-start-end-radius: 14px; border-end-end-radius: 14px;
+  background: var(--surface); box-shadow: 0 10px 30px rgb(0 0 0 / .18);
+  transition: transform .18s ease;
+}
+:root.rail-open .rail-nav { transform: translate(0, -50%); }
+
+.rail-link {
+  display: flex; align-items: center; gap: 10px;
+  height: 40px; padding: 0 10px; border-radius: 9px;
+  color: var(--ink-2); font-size: 13px; font-weight: 600; white-space: nowrap;
+}
+.rail-link b { font-weight: 600; display: none; }
+.rail-link:hover { background: var(--surface-2); color: var(--ink); }
+.rail-link[aria-current="true"] { background: var(--volt-fill); color: var(--on-volt); }
+.rail-ic { display: grid; place-items: center; width: 20px; height: 20px; flex: none; }
+.rail-ic svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Names appear on hover, so the rail is a strip until it is wanted. */
+.rail-nav:hover .rail-link b { display: block; }
+
+@media (min-width: 1150px) { .rail-nav { display: flex; } }
+@media (prefers-reduced-motion: reduce) { .rail-nav { transition: none; } }
+
+/* ============================================================
+   product photos in the dark
+   ============================================================ */
+
+/* Shops photograph products on white and save them as JPEG, so there is no
+   transparency to work with: on a dark page every tile was a glaring white
+   square. The panel becomes a soft light grey and the photo is blended into
+   it, so the white background disappears and the product does not. */
+html[data-theme="dark"] .card-media,
+html[data-theme="dark"] .gallery-main,
+html[data-theme="dark"] .thumbs button,
+html[data-theme="dark"] .sl-img,
+html[data-theme="dark"] .cmp-img {
+  background: #d6d8de;
+}
+html[data-theme="dark"] .card-media img,
+html[data-theme="dark"] .gallery-main img,
+html[data-theme="dark"] .thumbs img,
+html[data-theme="dark"] .sl-img img,
+html[data-theme="dark"] .cmp-img img {
+  mix-blend-mode: multiply;
+  filter: brightness(.97) saturate(1.05);
+}

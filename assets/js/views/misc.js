@@ -24,9 +24,9 @@ export async function saved() {
 
   if (!items.length) {
     return el('div', {},
-      crumbs([{ text: 'Home', href: href('home') }, { text: 'Saved' }]),
-      emptyState('Nothing saved yet',
-        'Tap the heart on any product to keep it here. It saves instantly — no account needed.',
+      crumbs([{ text: 'Home', href: href('home') }, { text: 'Wishlist' }]),
+      emptyState('Your wishlist is empty',
+        'Tap the heart on any product to keep it here. It saves instantly — no account needed, and you are told when the price drops.',
         { href: href('home'), text: 'Browse products' }),
     );
   }
@@ -38,10 +38,10 @@ export async function saved() {
   const back = items.filter((i) => isBackInStock(i.id));
 
   return el('div', {},
-    crumbs([{ text: 'Home', href: href('home') }, { text: 'Saved' }]),
+    crumbs([{ text: 'Home', href: href('home') }, { text: 'Wishlist' }]),
     el('div', { class: 'page-head' },
       el('div', {},
-        el('h1', {}, 'Saved products'),
+        el('h1', {}, 'Your wishlist'),
         el('p', { class: 'count' },
           plural(items.length, 'item'),
           drops.length ? ` · ${drops.length} cheaper than when you saved` : ''),
@@ -51,7 +51,7 @@ export async function saved() {
 
     savedTotal(items),
     back.length ? el('div', { class: 'panel panel-back' },
-      el('h2', {}, back.length === 1 ? 'One of your saved products is back in stock' : `${back.length} of your saved products are back in stock`),
+      el('h2', {}, back.length === 1 ? 'One product in your wishlist is back in stock' : `${back.length} products in your wishlist are back in stock`),
       el('ul', { style: 'margin:0;padding-inline-start:18px;font-size:14px;line-height:1.9' },
         back.map((b) => el('li', {},
           el('a', { href: href(`product/${b.sub}/${b.id}`), style: 'font-weight:600;text-decoration:underline' }, clip(b.title)),
@@ -106,8 +106,8 @@ function savedLines(items) {
         : el('a', { class: 'btn sl-check', href: page }, `Check at ${shop}`),
 
       el('button', {
-        class: 'sl-remove', type: 'button', 'aria-label': 'Remove from saved',
-        onclick: () => { store.toggleSave({ id: i.id }); toast('Removed from saved'); rebuild(); },
+        class: 'sl-remove', type: 'button', 'aria-label': 'Remove from wishlist',
+        onclick: () => { store.toggleSave({ id: i.id }); toast('Removed from your wishlist'); rebuild(); },
       }, '×'),
     ));
   }
@@ -166,7 +166,7 @@ function clearAllButton() {
     }
     clearTimeout(timer);
     store.clearSaved();
-    toast('Saved list cleared');
+    toast('Wishlist cleared');
     // Same route, so nothing navigates - ask the router to rebuild the view
     // in place. This used to set location.hash, left over from when the site
     // was a hash router; against real paths it did nothing at all and the

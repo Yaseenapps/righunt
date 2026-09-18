@@ -14,8 +14,8 @@ export function saveButton(product) {
     class: 'save-btn',
     type: 'button',
     'aria-pressed': saved ? 'true' : 'false',
-    'aria-label': saved ? 'Remove from saved' : 'Save this product',
-    title: saved ? 'Saved' : 'Save',
+    'aria-label': saved ? 'Remove from wishlist' : 'Add to wishlist',
+    title: saved ? 'In your wishlist' : 'Add to wishlist',
     html: HEART,
   });
   btn.addEventListener('click', (e) => {
@@ -23,9 +23,9 @@ export function saveButton(product) {
     e.stopPropagation();
     const now = store.toggleSave(product);
     btn.setAttribute('aria-pressed', now ? 'true' : 'false');
-    btn.setAttribute('aria-label', now ? 'Remove from saved' : 'Save this product');
-    btn.title = now ? 'Saved' : 'Save';
-    toast(now ? 'Saved' : 'Removed from saved');
+    btn.setAttribute('aria-label', now ? 'Remove from wishlist' : 'Add to wishlist');
+    btn.title = now ? 'In your wishlist' : 'Add to wishlist';
+    toast(now ? 'Added to your wishlist' : 'Removed from your wishlist');
   });
   return btn;
 }
@@ -178,4 +178,7 @@ export const ICONS = {
   chair: '<svg viewBox="0 0 24 24"><path d="M6 3.5h12v8H6zM4.5 11.5h15v4h-15zM7 15.5v5M17 15.5v5"/></svg>',
   gamepad: '<svg viewBox="0 0 24 24"><path d="M7.5 8h9a5 5 0 0 1 4.9 5.9l-.5 2.7A2.6 2.6 0 0 1 16.6 18L14 15.5h-4L7.4 18a2.6 2.6 0 0 1-4.3-1.4l-.5-2.7A5 5 0 0 1 7.5 8Z"/><path d="M7 11v2.5M5.8 12.2h2.4M15.5 11.5h.01M17.5 13.5h.01"/></svg>',
   plug: '<svg viewBox="0 0 24 24"><path d="M9 2.5v6M15 2.5v6M6.5 8.5h11v3a5.5 5.5 0 0 1-11 0Z"/><path d="M12 17v4.5"/></svg>',
+  home: '<svg viewBox="0 0 24 24"><path d="M3.5 10.5 12 3l8.5 7.5"/><path d="M5.5 9.5V20h13V9.5"/><path d="M10 20v-5.5h4V20"/></svg>',
+  deal: '<svg viewBox="0 0 24 24"><path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12z"/></svg>',
+  back: '<svg viewBox="0 0 24 24"><path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1"/><path d="M3.5 4.5V9h4.5"/></svg>',
 };

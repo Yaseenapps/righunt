@@ -167,7 +167,7 @@ async function route(parts, qs) {
   if (head === 'product' && a) return product(null, a);
   if (head === 'saved' || head === 'cart' || head === 'checkout') {
     // For a while this page was a cart with a checkout behind it. Links to
-    // either may still be around, so answer them with Saved rather than
+    // either may still be around, so answer them with the wishlist rather than
     // "page not found", and put the address bar back to its real name.
     if (head !== 'saved') navigate(href('saved'), { silent: true });
     return saved();
@@ -191,7 +191,7 @@ function titleFor(parts) {
   if (!head || head === 'home') return base;
   if (head === 'category') return `${META?.cats.get(a)?.name || 'Browse'} · ${base}`;
   if (head === 'products') return `${META?.subs.get(a)?.name || 'Products'} · ${base}`;
-  const map = { product: 'Product', saved: 'Saved', cart: 'Saved', checkout: 'Saved', about: 'About', deals: 'Deals', search: 'Search', restocked: 'Back in stock' };
+  const map = { product: 'Product', saved: 'Wishlist', cart: 'Wishlist', checkout: 'Wishlist', about: 'About', deals: 'Deals', search: 'Search', restocked: 'Back in stock' };
   return `${map[head] || 'Not found'} · ${base}`;
 }
 

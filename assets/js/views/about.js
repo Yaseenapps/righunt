@@ -60,8 +60,8 @@ export async function about() {
       + 'their warranty. RIGHUNT never takes payment and never asks for card or '
       + 'bank details. Anyone asking you for those in our name is not us.'),
     el('p', {},
-      'Tap the heart on anything to save it. Saved products stay for you, and '
-      + 'the Saved page tells you when one gets cheaper or comes back in stock.'),
+      'Tap the heart on anything to add it to your wishlist. It stays for you, and '
+      + 'the wishlist tells you when something gets cheaper or comes back in stock.'),
 
     el('h2', {}, 'What is kept about you'),
     el('p', {},
@@ -70,7 +70,7 @@ export async function about() {
       + 'there when you come back. There is no name attached to it.'),
     el('p', {}, 'What is stored:'),
     el('ul', {},
-      el('li', {}, 'the products you save, and what they cost when you saved them'),
+      el('li', {}, 'the products in your wishlist, and what they cost when you added them'),
     ),
     el('p', {}, 'What is never stored: your name, address, card numbers, bank '
       + 'details or passwords. There is no place in the system to put them.'),
