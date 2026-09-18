@@ -785,7 +785,37 @@ html[data-theme="dark"] .fopt input { accent-color: var(--volt-fill); }
 /* Names appear on hover, so the rail is a strip until it is wanted. */
 .rail-nav:hover .rail-link b { display: block; }
 
+/* Wide screens: a strip down the left, names on hover. */
 @media (min-width: 1150px) { .rail-nav { display: flex; } }
+
+/* Tablets: the same strip, icons only - there is no hovering here, and a tap
+   should go straight to the category rather than reveal a label. */
+@media (min-width: 760px) and (max-width: 1149px) {
+  .rail-nav { display: flex; }
+  .rail-nav:hover .rail-link b { display: none; }
+}
+
+/* Phones: across the bottom instead of down the side, where a thumb is and
+   where it cannot cover the products. Scrolls sideways if the categories do
+   not fit, and slides away again as soon as you scroll back up. */
+@media (max-width: 759px) {
+  .rail-nav {
+    display: flex; flex-direction: row; gap: 4px;
+    inset-inline: 0; inset-block-end: 0; top: auto;
+    transform: translateY(110%);
+    border-radius: 0; border: 0; border-top: 1px solid var(--line);
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+    overflow-x: auto; scrollbar-width: none;
+    box-shadow: 0 -8px 24px rgb(0 0 0 / .28);
+  }
+  .rail-nav::-webkit-scrollbar { display: none; }
+  :root.rail-open .rail-nav { transform: translateY(0); }
+  .rail-link { flex-direction: column; gap: 3px; height: auto; padding: 6px 10px; font-size: 10.5px; }
+  .rail-link b { display: block; font-size: 10.5px; font-weight: 600; }
+  .rail-nav:hover .rail-link b { display: block; }
+  /* The back-to-top button sits above the strip, not under it. */
+  :root.rail-open .to-top { inset-block-end: 76px; }
+}
 @media (prefers-reduced-motion: reduce) { .rail-nav { transition: none; } }
 
 /* ============================================================

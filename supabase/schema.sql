@@ -185,8 +185,6 @@ create trigger saved_items_stamp
   before insert on public.saved_items
   for each row execute function public.stamp_visitor_no();
 
-  for each row execute function public.stamp_visitor_no();
-
 -- Any account that never got a profile row - created before the trigger
 -- above existed, or made directly in the dashboard.
 insert into public.profiles (id, email)

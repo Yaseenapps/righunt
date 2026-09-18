@@ -366,8 +366,11 @@ function paintChrome(idx) {
       return;
     }
 
-    if (y > last && y > 220) root.classList.add('chrome-hidden');
-    else if (y < last || y < 90) root.classList.remove('chrome-hidden');
+    // Down and it goes; it comes back at the top of the page and nowhere
+    // else. Scrolling up used to bring all three bars back over the products,
+    // and the rail on the left is the way to another category now.
+    if (y > 220) root.classList.add('chrome-hidden');
+    else root.classList.remove('chrome-hidden');
 
     last = y;
   };

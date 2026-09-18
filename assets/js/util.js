@@ -207,7 +207,8 @@ export function scrollTop() {
 
 export function imageOrPlaceholder(src, alt) {
   if (!src) return el('div', { class: 'ph' }, 'No image');
-  return el('img', { src, alt: alt || '', loading: 'lazy', decoding: 'async', onerror: (e) => {
+  const img = el('img', { src, alt: alt || '', loading: 'lazy', decoding: 'async', onerror: (e) => {
     e.target.replaceWith(el('div', { class: 'ph' }, 'No image'));
   } });
+  return img;
 }

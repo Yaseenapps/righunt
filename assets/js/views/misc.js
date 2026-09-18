@@ -1,4 +1,4 @@
-import { el, money, plural, tokens, toast, href, clip } from '../util.js';
+import { el, money, plural, tokens, toast, href, clip, imageOrPlaceholder } from '../util.js';
 import * as data from '../data.js';
 import * as store from '../state.js';
 import { grid, crumbs, emptyState, pager, storeOf, isBackInStock } from '../components.js';
@@ -85,7 +85,7 @@ function savedLines(items) {
 
     list.append(el('div', { class: 'saved-line' + (i.inStock === false ? ' gone' : '') },
       el('a', { class: 'sl-img', href: page },
-        i.image ? el('img', { src: i.image, alt: '', loading: 'lazy' }) : el('span', { class: 'ph' })),
+        i.image ? imageOrPlaceholder(i.image, '') : el('span', { class: 'ph' })),
 
       el('div', { class: 'sl-main' },
         el('a', { class: 'sl-title', href: page }, clip(i.title, 70)),
