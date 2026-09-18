@@ -190,29 +190,6 @@ rather than guessed.
 Counts next to each option are computed in one pass per filter, not one pass per
 option — that is what keeps a 1,200-product category responsive while typing.
 
-### The PC builder
-
-The floating **Build a PC** panel answers from `data/builder.json` — nothing but
-in-stock rows from the catalogue. A language model (via `supabase/ai.sql`) reads
-the question and words the reply, but the parts are chosen by the rules engine
-(`assets/js/lib/builder.js`) and every card is drawn from the catalogue at its
-own price, so it cannot invent a part, a price or a shop.
-
-- Asking to change one part of a build shown — *"a better graphics card"*,
-  *"a faster processor"*, *"put a 9070 XT in it"* — changes that part and only
-  that part (`assets/js/lib/swap.js`), plus a bigger power supply or a new board
-  only when the machine would not work without one.
-
-- *"Build me a gaming PC for 2000 JD"* → a complete parts list, a total, and
-  **Save all parts**, which saves every part.
-- *"Best 32GB DDR5 under 120 JD"* → three ranked options, each savable.
-- Processor and motherboard are chosen **as a pair** so their sockets match;
-  memory must match the board's generation; the power supply is sized for the
-  card actually chosen. `checkCompatibility()` states any problem it cannot fix.
-- If a budget genuinely will not stretch, it says so and quotes the real floor
-  price rather than assembling a fantasy build. `scripts/test-builder.mjs`
-  asserts all of this against the live catalogue — run it after any change.
-
 ### Comparing prices
 
 Every product page compares within its own category only — a laptop is never

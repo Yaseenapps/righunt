@@ -371,20 +371,6 @@ async function write(allProducts, status) {
     .map(card);
   await writeFile(path.join(DATA, 'deals.json'), JSON.stringify({ count: offers.length, items: offers }));
 
-  // Everything in stock, trimmed to what the on-page assistant needs to
-  // recommend and to check compatibility. Fetched only when someone opens it.
-  const forBuilder = products
-    .filter((p) => p.inStock)
-    // No `url` here: the assistant links to our own product page, which
-    // carries the Buy button. Leaving it out keeps this file about a third
-    // smaller for everyone who opens the assistant.
-    .map((p) => ({
-      id: p.id, sub: p.sub, title: p.title, brand: p.brand || null,
-      price: p.price, off: p.off || 0, storeName: p.storeName,
-      image: p.image, specs: p.specs || {},
-    }));
-  await writeFile(path.join(DATA, 'builder.json'), JSON.stringify({ builtAt: new Date().toISOString(), products: forBuilder }));
-
   await writeFile(path.join(DATA, 'home.json'), JSON.stringify(buildHome(products)));
 
   // History is rolled before the restock list, which reads the freshly

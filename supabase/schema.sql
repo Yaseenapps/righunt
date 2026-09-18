@@ -1,4 +1,4 @@
--- RIGHUNT — saved products and assistant questions.
+-- RIGHUNT — the saved products list.
 --
 -- Run this once in the Supabase dashboard: SQL Editor -> New query -> paste ->
 -- Run. It is written to be safe to run again: every statement either creates
@@ -6,7 +6,7 @@
 --
 -- RIGHUNT does not sell anything. Every price links to the shop that has it,
 -- and people buy there. So this stores only two things: what a visitor saved,
--- and what they asked the assistant.
+-- saved.
 --
 -- Two ideas hold this together:
 --
@@ -90,7 +90,7 @@ create table if not exists public.saved_items (
   brand         text,
   image         text,
   -- The shop's own page. Not always known when something is saved: the
-  -- assistant builds from a trimmed catalogue with no links, and the saved
+  -- catalogue does not always carry one, and the saved
   -- page links to this site's product page, which finds the shop link.
   url           text,
 
@@ -145,40 +145,6 @@ create unique index if not exists profiles_visitor_no_idx on public.profiles (vi
 
 
 /* ---------------------------------------------------------------------------
- * What people ask the assistant
- *
- * One row per question. The reply is stored as a short summary rather than
- * the words it printed, because the words are generated from the summary -
- * keeping both would mean keeping the same thing twice and letting the two
- * drift apart.
- *
- * The column worth watching is `answered`. A false there is a question a
- * visitor asked and the assistant could not handle, in their own words. That
- * is a list of exactly what to teach it next, written by the people using it.
- * ------------------------------------------------------------------------ */
-
-create table if not exists public.assistant_queries (
-  id          uuid primary key default gen_random_uuid(),
-  user_id     uuid not null references auth.users (id) on delete cascade,
-
-  asked       text not null check (length(asked) <= 500),
-  intent      text,              -- build | pick | chat | offtopic | unknown
-  category    text,              -- for a single-part question: gpu, ram, ...
-  budget      numeric(10,2),     -- the amount it read, if any
-
-  answered    boolean not null default false,
-  outcome     text,              -- one readable line: what came back
-  total       numeric(10,2),     -- the build's total, when it built one
-  parts       jsonb,             -- what it chose, when it chose anything
-
-  created_at  timestamptz not null default now()
-);
-
-create index if not exists assistant_user_idx   on public.assistant_queries (user_id, created_at desc);
-create index if not exists assistant_failed_idx on public.assistant_queries (answered, created_at desc);
-
-
-/* ---------------------------------------------------------------------------
  * The visitor number, on the rows themselves
  *
  * A database links records by uuid and cannot do otherwise, so `user_id` has
@@ -189,7 +155,6 @@ create index if not exists assistant_failed_idx on public.assistant_queries (ans
  * ------------------------------------------------------------------------ */
 
 alter table public.saved_items       add column if not exists visitor_no bigint;
-alter table public.assistant_queries add column if not exists visitor_no bigint;
 
 create or replace function public.stamp_visitor_no()
 returns trigger
@@ -220,9 +185,6 @@ create trigger saved_items_stamp
   before insert on public.saved_items
   for each row execute function public.stamp_visitor_no();
 
-drop trigger if exists assistant_queries_stamp on public.assistant_queries;
-create trigger assistant_queries_stamp
-  before insert on public.assistant_queries
   for each row execute function public.stamp_visitor_no();
 
 -- Any account that never got a profile row - created before the trigger
@@ -238,10 +200,6 @@ update public.saved_items c
   from public.profiles p
  where p.id = c.user_id and c.visitor_no is null;
 
-update public.assistant_queries a
-   set visitor_no = p.visitor_no
-  from public.profiles p
- where p.id = a.user_id and a.visitor_no is null;
 
 
 /* ---------------------------------------------------------------------------
@@ -259,7 +217,6 @@ update public.assistant_queries a
 
 alter table public.profiles          enable row level security;
 alter table public.saved_items       enable row level security;
-alter table public.assistant_queries enable row level security;
 
 drop policy if exists "read own profile"   on public.profiles;
 drop policy if exists "update own profile" on public.profiles;
@@ -289,23 +246,12 @@ create policy "edit own saved" on public.saved_items
 create policy "unsave" on public.saved_items
   for delete to authenticated using ((select auth.uid()) = user_id);
 
-drop policy if exists "read own questions" on public.assistant_queries;
-drop policy if exists "log own questions"  on public.assistant_queries;
-
-create policy "read own questions" on public.assistant_queries
-  for select to authenticated using ((select auth.uid()) = user_id);
-
--- Insert only. A visitor may add to their own history and read it back, but
--- nothing on the site can edit or erase what was asked.
-create policy "log own questions" on public.assistant_queries
-  for insert to authenticated with check ((select auth.uid()) = user_id);
 
 -- "Automatically expose new tables" is switched off on this project, so a new
 -- table is unreachable until it is granted explicitly.
 grant usage on schema public to authenticated;
 grant select, update                 on public.profiles          to authenticated;
 grant select, insert, update, delete on public.saved_items       to authenticated;
-grant select, insert                 on public.assistant_queries to authenticated;
 
 
 /* ---------------------------------------------------------------------------
@@ -323,8 +269,6 @@ grant select, insert                 on public.assistant_queries to authenticate
 -- Dropped first, not replaced: `create or replace view` refuses to run when
 -- the columns change.
 drop view if exists public.admin_visitors;
-drop view if exists public.admin_assistant;
-drop view if exists public.admin_assistant_failures;
 drop view if exists public.admin_saved;
 
 create or replace view public.admin_visitors as
@@ -332,23 +276,14 @@ select
   p.visitor_no,
   coalesce(p.display_name, p.email, 'anonymous')                        as who,
   (select count(*) from public.saved_items c where c.user_id = p.id)    as saved,
-  (select count(*) from public.assistant_queries a where a.user_id = p.id)                    as questions,
-  (select count(*) from public.assistant_queries a where a.user_id = p.id and not a.answered) as unanswered,
   p.created_at as first_seen,
   greatest(
     p.created_at,
-    (select max(c.added_at)   from public.saved_items       c where c.user_id = p.id),
-    (select max(a.created_at) from public.assistant_queries a where a.user_id = p.id)
+    (select max(c.added_at) from public.saved_items c where c.user_id = p.id)
   ) as last_seen,
   p.id as user_id
 from public.profiles p;
 
--- Everything anyone has asked. visitor_no straight off the row, no join - an
--- inner join hides every row it cannot match.
-create or replace view public.admin_assistant as
-select a.visitor_no, a.created_at, a.asked, a.answered, a.outcome,
-       a.intent, a.category, a.budget, a.total, a.parts
-from public.assistant_queries a;
 
 -- Every saved product, by visitor number rather than by uuid.
 create or replace view public.admin_saved as
@@ -363,21 +298,9 @@ select c.visitor_no,
        c.added_at
 from public.saved_items c;
 
--- What the assistant is being asked and failing to answer, most frequent
--- first. Each row is a feature request from a real visitor.
-create or replace view public.admin_assistant_failures as
-select lower(btrim(asked))     as asked,
-       count(*)                as times,
-       count(distinct user_id) as people,
-       max(created_at)         as last_asked
-from public.assistant_queries
-where not answered
-group by lower(btrim(asked));
 
 
 revoke all on public.admin_visitors            from anon, authenticated;
-revoke all on public.admin_assistant           from anon, authenticated;
-revoke all on public.admin_assistant_failures  from anon, authenticated;
 revoke all on public.admin_saved               from anon, authenticated;
 
 
@@ -387,23 +310,20 @@ revoke all on public.admin_saved               from anon, authenticated;
  * In SQL Editor:
  *
  *   select * from admin_visitors order by last_seen desc;
- *   select * from admin_assistant order by created_at desc limit 100;
- *   select * from admin_assistant_failures order by times desc;
  *   select * from admin_saved order by visitor_no, added_at;
  *
  * Everything one person has done:
  *
- *   select * from admin_assistant where visitor_no = 7 order by created_at;
  *   select * from admin_saved     where visitor_no = 7;
  *
  * Starting clean before launch - empties everything and puts the visitor
  * numbering back to 1:
  *
- *   truncate public.assistant_queries, public.saved_items;
+ *   truncate public.saved_items;
  *   delete from auth.users;
  *   alter table public.profiles alter column visitor_no restart with 1;
  *
- * And the raw questions, if you want them:
+ * And a few things worth knowing:
  *
  *   -- the most saved products on the site
  *   select title, store_name, count(distinct user_id) as people, max(price) as price

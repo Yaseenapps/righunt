@@ -704,227 +704,52 @@ html[data-theme="dark"] .fopt input { accent-color: var(--volt-fill); }
   border-end-end-radius: 0; border-start-start-radius: 8px;
 }
 
+
 /* ============================================================
-   build assistant
+   waiting, and getting back up
    ============================================================ */
 
-/* Lifted clear of the very bottom edge, so it never sits under a phone's
-   home indicator or over the pagination. */
-.as-launch {
-  position: fixed; inset-inline-end: 22px; bottom: 24px; z-index: 120;
-  display: flex; align-items: center; gap: 9px;
-  padding: 13px 18px; border: 0; border-radius: 999px;
-  background: var(--volt-fill); color: var(--on-volt);
-  font-family: var(--display); font-weight: 700; font-size: 14px;
-  letter-spacing: .03em; cursor: pointer;
-  box-shadow: 0 6px 20px -6px rgba(0, 0, 0, .5), 0 2px 6px rgba(0, 0, 0, .3);
+/* The shape of the page that is coming, rather than a spinner in the middle
+   of nothing: the layout does not jump when the products land, and a slow
+   connection looks like loading instead of like a broken site. */
+.skeleton { margin-top: 18px; }
+.sk {
+  border-radius: 10px;
+  background: linear-gradient(100deg, var(--surface) 30%, var(--surface-2) 50%, var(--surface) 70%);
+  background-size: 220% 100%;
+  animation: sk-sweep 1.3s linear infinite;
 }
-.as-launch:hover { filter: brightness(1.06); transform: translateY(-1px); }
-.as-launch svg { width: 19px; height: 19px; stroke-width: 2; }
+@keyframes sk-sweep { from { background-position: 180% 0; } to { background-position: -40% 0; } }
 
-.as-panel {
-  position: fixed; inset-inline-end: 22px; bottom: 84px; z-index: 130;
-  width: min(390px, calc(100vw - 32px)); max-height: min(620px, calc(100vh - 130px));
-  display: none; flex-direction: column; overflow: hidden;
-  background: var(--surface); border: 1px solid var(--line-2); border-radius: 14px;
-  box-shadow: var(--shadow-lg);
+.sk-card { display: grid; gap: 9px; }
+.sk-media { aspect-ratio: 1; border-radius: var(--r); }
+.sk-line { height: 13px; }
+.sk-line.short { width: 55%; }
+.sk-line.head { height: 30px; width: min(320px, 60%); margin-bottom: 22px; }
+.sk-gallery { aspect-ratio: 1; border-radius: var(--r); }
+.sk-price { height: 34px; width: 180px; margin: 18px 0; }
+.sk-block { height: 220px; }
+.skeleton.pdp .sk-line { margin-bottom: 10px; }
+.skeleton.prose .sk-line { margin-bottom: 14px; }
+
+@media (prefers-reduced-motion: reduce) { .sk { animation: none; } }
+
+/* Forty screens of graphics cards is a long way back. */
+.to-top {
+  position: fixed; inset-inline-end: 18px; inset-block-end: 18px; z-index: 70;
+  width: 44px; height: 44px; display: grid; place-items: center;
+  border-radius: 50%; border: 1px solid var(--line-2);
+  background: var(--surface); color: var(--ink);
+  box-shadow: 0 6px 20px rgb(0 0 0 / .22); cursor: pointer;
 }
-.as-panel.open { display: flex; }
+.to-top:hover { border-color: var(--ink-3); transform: translateY(-1px); }
+.to-top svg { width: 19px; height: 19px; }
+.to-top[hidden] { display: none; }
 
-.as-head {
-  display: flex; align-items: center; justify-content: space-between; gap: 10px;
-  padding: 13px 15px; background: var(--head-bg); color: var(--head-ink); flex: none;
+/* A visible ring for anyone moving through the site by keyboard. It is only
+   shown for keyboard focus, so a mouse click does not leave a halo. */
+:where(a, button, input, select, textarea):focus-visible {
+  outline: 2px solid var(--volt-fill);
+  outline-offset: 2px;
+  border-radius: 6px;
 }
-.as-head b { display: block; font-family: var(--display); font-size: 15px; letter-spacing: .02em; }
-.as-head small { display: block; font-size: 11px; color: var(--head-ink-2); margin-top: 2px; }
-.as-close { border: 0; background: none; color: var(--head-ink-2); font-size: 24px; line-height: 1; cursor: pointer; padding: 0 4px; }
-.as-close:hover { color: var(--head-ink); }
-
-.as-feed { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; scrollbar-width: thin; }
-
-.as-msg { font-size: 13.5px; line-height: 1.55; border-radius: 12px; padding: 10px 13px; max-width: 92%; }
-.as-bot { background: var(--surface-2); color: var(--ink); align-self: flex-start; border-start-start-radius: 3px; }
-.as-me { background: var(--ink); color: var(--bg); align-self: flex-end; border-start-end-radius: 3px; }
-.as-thinking { opacity: .65; font-style: italic; }
-
-.as-starters { display: flex; flex-direction: column; gap: 7px; }
-.as-starter {
-  text-align: start; padding: 10px 13px; border-radius: 10px; cursor: pointer;
-  border: 1px dashed var(--line-2); background: transparent; color: var(--ink);
-  font-size: 13px; font-weight: 550;
-}
-.as-starter:hover { border-style: solid; border-color: var(--volt); background: var(--surface-2); }
-
-.as-item { display: flex; align-items: center; gap: 9px; padding: 7px; border-radius: 9px; background: var(--surface-2); }
-.as-item:hover { background: var(--line); }
-.as-item img, .as-noimg { width: 38px; height: 38px; flex: none; object-fit: contain; background: #fff; border-radius: 6px; }
-.as-item-t { flex: 1; min-width: 0; }
-.as-item-t b { display: block; font-size: 12.5px; font-weight: 550; line-height: 1.35; }
-.as-item-t small { display: block; font-size: 10.5px; color: var(--ink-3); margin-top: 2px; }
-.as-item-p { font-weight: 700; font-size: 13px; white-space: nowrap; font-variant-numeric: tabular-nums; }
-
-.as-build { display: flex; flex-direction: column; gap: 9px; }
-.as-part-label { display: block; font-size: 10.5px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 4px; }
-
-.as-list { display: flex; flex-direction: column; gap: 8px; }
-.as-row { display: flex; align-items: center; gap: 8px; }
-.as-row .as-item { flex: 1; min-width: 0; }
-.as-save {
-  flex: none; padding: 7px 11px; border-radius: 8px; cursor: pointer;
-  border: 1px solid var(--line-2); background: var(--surface); font-size: 12px; font-weight: 650;
-}
-.as-save:hover { border-color: var(--hot); color: var(--hot); }
-
-.as-note { font-size: 11.5px; line-height: 1.5; color: var(--ink-3); padding: 0 3px; }
-.as-ok { font-size: 12px; font-weight: 600; color: var(--good); padding: 0 3px; }
-.as-warn { font-size: 12px; line-height: 1.5; color: var(--warn, #b4560a); background: var(--hot-fill); border-radius: 8px; padding: 9px 11px; }
-html[data-theme="dark"] .as-warn { color: #ffc46b; }
-.as-agree { width: 100%; margin-top: 2px; }
-.as-more { font-size: 12.5px; font-weight: 700; color: var(--ink); text-decoration: underline; padding: 0 3px; }
-
-.as-ask { display: flex; gap: 8px; padding: 11px; border-top: 1px solid var(--line); flex: none; background: var(--surface); }
-.as-input { flex: 1; min-width: 0; height: 40px; padding: 0 12px; border-radius: 9px; border: 1px solid var(--line-2); background: var(--bg); outline: none; font-size: 13.5px; }
-.as-input:focus { border-color: var(--volt); }
-.as-send { flex: none; width: 40px; height: 40px; border-radius: 9px; border: 0; background: var(--volt-fill); color: var(--on-volt); cursor: pointer; display: grid; place-items: center; }
-.as-send:hover { filter: brightness(1.06); }
-
-@media (max-width: 620px) {
-  .as-launch { inset-inline-end: 14px; bottom: 16px; padding: 12px 15px; }
-  .as-launch span { display: none; }
-  .as-panel {
-    inset-inline: 8px; bottom: 72px; width: auto;
-    max-height: min(78vh, calc(100vh - 110px));
-  }
-}
-
-/* What this has cost before. Appears only once there are enough readings. */
-.price-history { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--ink-3); margin: -2px 0 14px; }
-.price-history .ph-drop { color: var(--good); font-weight: 650; }
-.price-history .ph-rise { color: var(--ink-2); }
-
-/* What the saved list adds up to - the number you want when assembling a
-   build part by part. */
-.saved-total {
-  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
-  gap: 12px 24px; margin: 0 0 18px; padding: 16px 18px;
-  background: var(--surface); border: 1px solid var(--line); border-inline-start: 3px solid var(--volt-fill);
-  border-radius: var(--r);
-}
-.st-label { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); }
-.st-sum { font-family: var(--display); font-size: clamp(24px, 4vw, 32px); font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums; margin-top: 4px; }
-.st-sum small { font-size: 15px; font-weight: 600; color: var(--ink-2); }
-.st-meta { text-align: end; font-size: 12.5px; color: var(--ink-3); line-height: 1.7; }
-.st-drop { color: var(--good); font-weight: 650; }
-@media (max-width: 560px) { .st-meta { text-align: start; } }
-
-/* Contact block in the footer. */
-.foot-contact { margin: 0 0 10px; font-size: 13px; line-height: 1.6; }
-.foot-mail {
-  display: inline-block; font-size: 13.5px; font-weight: 650; color: var(--volt-fill);
-  border-bottom: 1px solid color-mix(in srgb, var(--volt-fill) 45%, transparent);
-  padding-bottom: 1px; word-break: break-all;
-}
-.foot-mail:hover { border-bottom-color: var(--volt-fill); }
-
-/* Product page: the one-line explanation behind a "Back in stock" badge. */
-.back-note {
-  margin: 10px 0 0; padding: 9px 12px; font-size: 13px; line-height: 1.5;
-  color: var(--good); border: 1px solid var(--good); border-radius: 8px;
-  background: color-mix(in srgb, var(--good) 8%, transparent);
-}
-
-/* ===========================================================================
- * Saved, as lines
- *
- * Tiles are for browsing. On the Saved page what matters is the price now,
- * whether it moved since it was saved, and the way to the shop that has it.
- * ======================================================================== */
-
-.saved-lines { display: grid; gap: 10px; margin-top: 18px; }
-
-.saved-line {
-  display: grid;
-  grid-template-columns: 64px 1fr auto auto auto;
-  gap: 14px;
-  align-items: center;
-  padding: 12px 14px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--r);
-}
-.saved-line.gone { opacity: .62; }
-
-.sl-img { display: block; width: 64px; height: 64px; border-radius: 8px; overflow: hidden; background: var(--surface-2); }
-.sl-img img { width: 100%; height: 100%; object-fit: contain; }
-.sl-img .ph { display: block; width: 100%; height: 100%; }
-
-.sl-main { min-width: 0; }
-.sl-title { display: block; font-weight: 600; font-size: 14px; line-height: 1.35; color: var(--ink); text-decoration: none; }
-.sl-title:hover { text-decoration: underline; }
-.sl-meta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 5px; font-size: 12px; color: var(--ink-3); }
-.sl-shop { font-weight: 600; }
-.sl-gone { color: var(--hot); font-weight: 600; }
-.sl-drop { color: var(--good); font-weight: 600; }
-
-.sl-price { text-align: right; min-width: 80px; font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; }
-
-.sl-check { padding: 8px 12px; font-size: 13px; white-space: nowrap; }
-
-.sl-remove {
-  width: 28px; height: 28px; border: 1px solid var(--line); border-radius: 8px;
-  background: transparent; color: var(--ink-3); font-size: 16px; line-height: 1; cursor: pointer;
-}
-.sl-remove:hover { border-color: var(--hot); color: var(--hot); background: var(--hot-fill); }
-
-@media (max-width: 720px) {
-  .saved-line { grid-template-columns: 56px 1fr auto; row-gap: 10px; }
-  .sl-img { width: 56px; height: 56px; }
-  .sl-main { grid-column: 2 / -1; }
-  .sl-price { grid-column: 1 / 3; grid-row: 2; text-align: start; }
-  .sl-remove { grid-column: 3; grid-row: 2; justify-self: end; }
-  .sl-check { grid-column: 1 / -1; grid-row: 3; white-space: normal; text-align: center; }
-}
-
-.buy-row .btn svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-
-
-/* Long-form reading: About, and anything else that is mostly words.
-   Narrow measure and generous line height, because a 100-character line is
-   where people lose their place. */
-.prose { max-width: 68ch; }
-.prose h1 { margin: 8px 0 14px; font-size: clamp(24px, 3.4vw, 34px); letter-spacing: -.01em; }
-.prose h2 { margin: 32px 0 10px; font-size: 17px; letter-spacing: -.005em; }
-.prose p { margin: 0 0 13px; font-size: 15px; line-height: 1.72; color: var(--ink-2); }
-.prose .lead { font-size: 17px; line-height: 1.6; color: var(--ink); }
-.prose b { color: var(--ink); }
-.prose a { color: var(--ink); text-decoration: underline; text-underline-offset: 2px; }
-.prose ul { margin: 0 0 14px; padding-inline-start: 20px; }
-.prose li { margin-bottom: 7px; font-size: 15px; line-height: 1.65; color: var(--ink-2); }
-.about-foot { margin-top: 30px !important; padding-top: 14px; border-top: 1px solid var(--line); font-size: 13px !important; color: var(--ink-3) !important; }
-
-/* About, given a door rather than a line of small print at the very bottom.
-   Someone deciding whether to order from a site they have not heard of is
-   looking for exactly this, and they should not have to hunt for it. */
-.foot-cta {
-  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
-  padding: 20px 0; border-top: 1px solid var(--line);
-}
-.foot-cta span { font-size: 13px; color: var(--foot-ink); }
-.btn-about {
-  flex: none; padding: 10px 20px; border-radius: 9px;
-  background: var(--volt-fill); color: var(--on-volt);
-  font-weight: 700; font-size: 14px; text-decoration: none;
-  border: 0; white-space: nowrap;
-}
-.btn-about:hover { filter: brightness(1.06); }
-@media (max-width: 560px) {
-  .foot-cta { gap: 10px; }
-  .btn-about { width: 100%; text-align: center; }
-}
-
-
-/* A reply the model rewrote. Fades in so the swap does not look like a
-   glitch, and is otherwise identical to one we wrote ourselves. */
-.as-msg.as-said { animation: as-said-in .25s ease; }
-@keyframes as-said-in { from { opacity: .45; } to { opacity: 1; } }
-@media (prefers-reduced-motion: reduce) { .as-msg.as-said { animation: none; } }

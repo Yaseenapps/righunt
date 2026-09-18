@@ -3,7 +3,6 @@ import * as data from './data.js';
 import * as store from './state.js';
 import { setStores, emptyState, setBackInStock } from './components.js';
 import { initNav, paintNav } from './nav.js';
-import { initAssistant } from './assistant.js';
 import { home, category, deals, restocked } from './views/home.js';
 import { browse } from './views/browse.js';
 import { product } from './views/product.js';
@@ -88,9 +87,7 @@ async function render() {
   const mine = ++token;
   const { parts, qs } = parseRoute();
 
-  main.replaceChildren(el('div', { class: 'boot' },
-    el('div', { class: 'loader', 'aria-hidden': 'true' }, el('i'), el('i'), el('i')),
-    el('p', {}, 'Loading…')));
+  main.replaceChildren(waiting(parts));
 
   markNav(parts);
 
@@ -108,6 +105,41 @@ async function render() {
   main.replaceChildren(node);
   document.title = titleFor(parts);
   window.scrollTo({ top: 0 });
+}
+
+/**
+ * What to show while a page is being put together.
+ *
+ * A spinner in the middle of an empty screen says "wait" and nothing else.
+ * These are the shapes the page is about to have, so the layout does not jump
+ * when the products arrive and the wait reads as loading rather than as a
+ * blank site. A single product page gets its own shape, and pages that are
+ * mostly words get a plain line.
+ */
+function waiting(parts) {
+  const head = parts[0] || 'home';
+  const tile = () => el('div', { class: 'sk-card' },
+    el('div', { class: 'sk sk-media' }),
+    el('div', { class: 'sk sk-line' }),
+    el('div', { class: 'sk sk-line short' }));
+
+  if (head === 'product') {
+    return el('div', { class: 'skeleton pdp', 'aria-hidden': 'true' },
+      el('div', { class: 'sk sk-gallery' }),
+      el('div', {},
+        el('div', { class: 'sk sk-line' }),
+        el('div', { class: 'sk sk-line short' }),
+        el('div', { class: 'sk sk-price' }),
+        el('div', { class: 'sk sk-block' })),
+    );
+  }
+  if (head === 'about') return el('div', { class: 'skeleton prose', 'aria-hidden': 'true' },
+    el('div', { class: 'sk sk-line' }), el('div', { class: 'sk sk-block' }));
+
+  return el('div', { class: 'skeleton', 'aria-hidden': 'true' },
+    el('div', { class: 'sk sk-line head' }),
+    el('div', { class: 'grid' }, Array.from({ length: 8 }, tile)),
+  );
 }
 
 /** Light the right tabs immediately, before the page body has loaded. */
@@ -162,6 +194,21 @@ function titleFor(parts) {
   const map = { product: 'Product', saved: 'Saved', cart: 'Saved', checkout: 'Saved', about: 'About', deals: 'Deals', search: 'Search', restocked: 'Back in stock' };
   return `${map[head] || 'Not found'} · ${base}`;
 }
+
+/* ---------------------------------------------------------------------------
+ * Getting back up
+ *
+ * A category runs to forty screens of products. Appears once you are far
+ * enough down to have lost the header, and takes you back to the search box
+ * rather than only to the top.
+ * ------------------------------------------------------------------------ */
+const toTop = el('button', {
+  class: 'to-top', type: 'button', hidden: true, 'aria-label': 'Back to top',
+  html: '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>',
+  onclick: () => window.scrollTo({ top: 0, behavior: 'smooth' }),
+});
+document.body.append(toTop);
+addEventListener('scroll', () => { toTop.hidden = window.scrollY < 900; }, { passive: true });
 
 window.addEventListener('popstate', render);
 
@@ -344,7 +391,6 @@ function paintChrome(idx) {
     setStores(META.stores);
     initNav(META);
     paintChrome(META.idx);
-    initAssistant();
     // Which products came back into stock, so any card can say so. Its own
     // failure must not take the catalogue down with it, hence the catch.
     setBackInStock(await data.backInStock().catch(() => new Map()));

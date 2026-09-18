@@ -71,7 +71,6 @@ export async function about() {
     el('p', {}, 'What is stored:'),
     el('ul', {},
       el('li', {}, 'the products you save, and what they cost when you saved them'),
-      el('li', {}, 'questions you type into the assistant, so it can be improved'),
     ),
     el('p', {}, 'What is never stored: your name, address, card numbers, bank '
       + 'details or passwords. There is no place in the system to put them.'),

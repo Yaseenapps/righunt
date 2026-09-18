@@ -7,7 +7,7 @@ const BACKSLASH = String.fromCharCode(92);
 const files = [
   'assets/js/views/home.js', 'assets/js/views/browse.js', 'assets/js/views/product.js',
   'assets/js/views/misc.js', 'assets/js/components.js', 'assets/js/nav.js',
-  'assets/js/assistant.js', 'assets/js/app.js',
+  'assets/js/app.js',
 ];
 
 let repaired = 0;

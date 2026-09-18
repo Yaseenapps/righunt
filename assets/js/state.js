@@ -66,11 +66,8 @@ export const get = () => state;
 /**
  * Which shop a product came from.
  *
- * Most of the site carries this on the product. The assistant does not: it
- * reads data/builder.json, which is trimmed down to ids, prices and specs to
- * keep it small, and drops both the shop slug and the shop link. But every id
- * in the catalogue is `<shop>-<hash>`, so the shop is still there. Reading it
- * back off the id is what lets "save all parts" work at all.
+ * Most of the site carries this on the product. Where it does not, every id
+ * in the catalogue is `<shop>-<hash>`, so the shop is still there.
  */
 const shopOf = (m) => m.store || String(m.id || '').split('-')[0] || null;
 
