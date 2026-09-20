@@ -2,6 +2,7 @@ import { el, money, plural, labelise, specValue, similarity, imageOrPlaceholder,
 import * as data from '../data.js';
 import * as store from '../state.js';
 import { crumbs, emptyState, storeOf, section, rail, isBackInStock } from '../components.js';
+import { priceAlertButton } from '../alerts.js';
 
 export async function product(subId, productId) {
   const p = await data.product(subId, productId);
@@ -87,6 +88,12 @@ export async function product(subId, productId) {
         el('svg', { viewBox: '0 0 24 24', 'aria-hidden': 'true' })),
       saveToggle({ ...p, sub: realSub }),
     ),
+
+    // On its own line rather than crowded in beside the other two. It is the
+    // answer to "this is too expensive today", which is a different decision
+    // from either buying it or filing it away, and the one people take when
+    // they are about to close the tab.
+    el('div', { class: 'alert-row' }, priceAlertButton({ ...p, sub: realSub })),
 
     optionBlock(p),
     specTable(p),

@@ -61,7 +61,10 @@ export async function about() {
       + 'bank details. Anyone asking you for those in our name is not us.'),
     el('p', {},
       'Tap the heart on anything to add it to your wishlist. It stays for you, and '
-      + 'the wishlist tells you when something gets cheaper or comes back in stock.'),
+      + 'the wishlist tells you when something gets cheaper or comes back in stock. '
+      + 'On a product page you can also ask to be emailed the moment its price '
+      + 'falls — the prices are re-read every morning, and if yours has dropped '
+      + 'the message goes out then.'),
 
     el('h2', {}, 'What is kept about you'),
     el('p', {},
@@ -71,6 +74,10 @@ export async function about() {
     el('p', {}, 'What is stored:'),
     el('ul', {},
       el('li', {}, 'the products in your wishlist, and what they cost when you added them'),
+      el('li', {}, 'if you ask to be told when a price drops: your email address, '
+        + 'attached to that one product. It is used to send that one message and '
+        + 'nothing else — no newsletter, no offers — and every email has a link '
+        + 'that deletes it in one click.'),
     ),
     el('p', {}, 'What is never stored: your name, address, card numbers, bank '
       + 'details or passwords. There is no place in the system to put them.'),
