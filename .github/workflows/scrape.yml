@@ -110,24 +110,3 @@ jobs:
             done
             echo "::warning::Could not save refreshed prices. The site keeps the prices it already has."
           fi
-
-      # Tell the people who asked to be told.
-      #
-      # After the commit, deliberately. An email that says a price dropped has
-      # to point at a site that agrees with it, and the site is whatever was
-      # just pushed - so sending first would mean linking people to yesterday.
-      #
-      # continue-on-error because nobody's morning prices should depend on an
-      # email provider being awake. The script is written the same way: with no
-      # keys set it says so and exits quietly, and a row is only marked as
-      # emailed once the message has actually been accepted, so a bad day here
-      # costs a day's notifications and never a duplicate or a missed one.
-      - name: Send price-drop emails
-        continue-on-error: true
-        env:
-          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-          BREVO_API_KEY: ${{ secrets.BREVO_API_KEY }}
-          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-          ALERT_FROM: ${{ vars.ALERT_FROM }}
-          SITE_URL: ${{ vars.SITE_URL }}
-        run: node scripts/price-alerts.mjs .

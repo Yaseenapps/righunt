@@ -173,12 +173,6 @@ async function route(parts, qs) {
     return saved();
   }
   if (head === 'about') return about();
-  if (head === 'unsubscribe') {
-    // Reached from the link in a price-alert email, so it has to work in a
-    // browser that has never opened this site before.
-    const { unsubscribe } = await import('./alerts.js');
-    return unsubscribe(new URLSearchParams(qs).get('t') || a || '');
-  }
   if (head === 'deals') return deals(parseInt(new URLSearchParams(qs).get('page') || '1', 10), navigate);
   if (head === 'restocked') return restocked(parseInt(new URLSearchParams(qs).get('page') || '1', 10), navigate);
   if (head === 'search') {
@@ -197,7 +191,7 @@ function titleFor(parts) {
   if (!head || head === 'home') return base;
   if (head === 'category') return `${META?.cats.get(a)?.name || 'Browse'} · ${base}`;
   if (head === 'products') return `${META?.subs.get(a)?.name || 'Products'} · ${base}`;
-  const map = { product: 'Product', saved: 'Wishlist', cart: 'Wishlist', checkout: 'Wishlist', about: 'About', deals: 'Deals', search: 'Search', restocked: 'Back in stock', unsubscribe: 'Price alerts' };
+  const map = { product: 'Product', saved: 'Wishlist', cart: 'Wishlist', checkout: 'Wishlist', about: 'About', deals: 'Deals', search: 'Search', restocked: 'Back in stock' };
   return `${map[head] || 'Not found'} · ${base}`;
 }
 

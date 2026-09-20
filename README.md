@@ -352,25 +352,3 @@ the site still updates, and the failure is recorded in `data/status.json`.
   perfect; the occasional oddity will still slip into a category.
 - RIGHUNT does not sell anything. No payments and no checkout happen here;
   every "Check at" button opens the shop's own product page.
-
-## Price-drop emails
-
-A product page has **Notify me when the price drops**. The visitor gives an
-email address and, optionally, a price to wait for. The row goes in Supabase
-(`supabase/price-alerts.sql` — run it once); the message is sent by
-`scripts/price-alerts.mjs`, which runs in the daily refresh workflow straight
-after the new prices are committed.
-
-Nothing sends until two repository secrets exist:
-
-| Secret | What it is |
-| --- | --- |
-| `SUPABASE_SERVICE_KEY` | The `service_role` key, Supabase → Settings → API Keys. It bypasses row security, which is the only way one job can read everybody's alerts. Never put it in the site. |
-| `BREVO_API_KEY` | Brevo → SMTP & API → API keys. Free, 300 emails a day, and it sends to any address once the sender is confirmed — no domain needed. `RESEND_API_KEY` works instead if you'd rather use Resend with your own domain. |
-
-Optional repository *variables*: `ALERT_FROM` (defaults to the contact address)
-and `SITE_URL` (defaults to the live Workers URL).
-
-With neither key set the script says so and exits 0 — the alerts pile up
-safely and go out on the first run after the keys are added. A run that cannot
-send changes nothing, so nobody gets the same email twice.
