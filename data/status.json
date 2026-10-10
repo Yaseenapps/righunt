@@ -1,12 +1,12 @@
 {
-  "builtAt": "2026-10-09T12:21:03.588Z",
+  "builtAt": "2026-10-10T11:32:10.775Z",
   "stores": [
     {
       "store": "igeek",
       "name": "iGeek Megastore",
       "ok": true,
       "products": 5143,
-      "seconds": 179
+      "seconds": 169
     },
     {
       "store": "gameon",
@@ -20,21 +20,21 @@
       "name": "PC Circle",
       "ok": true,
       "products": 3929,
-      "seconds": 1112
+      "seconds": 800
     },
     {
       "store": "compujordan",
       "name": "Compu Jordan",
       "ok": true,
       "products": 3182,
-      "seconds": 233
+      "seconds": 234
     },
     {
       "store": "citycenter",
       "name": "City Center Computers",
       "ok": true,
-      "products": 9314,
-      "seconds": 3385
+      "products": 9327,
+      "seconds": 3388
     },
     {
       "store": "orientalstore",
@@ -43,7 +43,7 @@
       "error": "robots.txt disallows crawling",
       "products": 3683,
       "keptPrevious": true,
-      "seconds": 0
+      "seconds": 1
     },
     {
       "store": "social",
@@ -59,14 +59,14 @@
       "error": "HTTP 403 - the store is refusing automated requests",
       "products": 418,
       "keptPrevious": true,
-      "seconds": 3
+      "seconds": 2
     },
     {
       "store": "numberone",
       "name": "Number One Store",
       "ok": true,
-      "products": 1987,
-      "seconds": 1489
+      "products": 1989,
+      "seconds": 1461
     },
     {
       "store": "midas",
