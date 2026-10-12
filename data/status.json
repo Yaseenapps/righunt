@@ -1,5 +1,5 @@
 {
-  "builtAt": "2026-10-11T11:43:23.589Z",
+  "builtAt": "2026-10-12T12:31:24.546Z",
   "stores": [
     {
       "store": "igeek",
@@ -13,28 +13,30 @@
       "name": "GameOn JO",
       "ok": true,
       "products": 2501,
-      "seconds": 49
+      "seconds": 46
     },
     {
       "store": "pccircle",
       "name": "PC Circle",
       "ok": true,
-      "products": 3934,
-      "seconds": 897
+      "products": 3941,
+      "seconds": 1010
     },
     {
       "store": "compujordan",
       "name": "Compu Jordan",
-      "ok": true,
-      "products": 3186,
-      "seconds": 216
+      "ok": false,
+      "error": "HTTP 403 - the store is refusing automated requests",
+      "products": 1635,
+      "keptPrevious": true,
+      "seconds": 1
     },
     {
       "store": "citycenter",
       "name": "City Center Computers",
       "ok": true,
-      "products": 9340,
-      "seconds": 3392
+      "products": 9349,
+      "seconds": 3425
     },
     {
       "store": "orientalstore",
