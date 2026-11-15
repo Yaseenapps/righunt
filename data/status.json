@@ -1,49 +1,51 @@
 {
-  "builtAt": "2026-10-18T09:46:04.365Z",
+  "builtAt": "2026-11-15T12:24:52.222Z",
   "stores": [
     {
       "store": "igeek",
       "name": "iGeek Megastore",
       "ok": true,
-      "products": 5256,
-      "seconds": 199
+      "products": 5458,
+      "seconds": 197
     },
     {
       "store": "gameon",
       "name": "GameOn JO",
       "ok": true,
-      "products": 2501,
+      "products": 2493,
       "seconds": 46
     },
     {
       "store": "pccircle",
       "name": "PC Circle",
-      "ok": true,
-      "products": 3978,
-      "seconds": 866
+      "ok": false,
+      "error": "HTTP 429 (rate limited)",
+      "products": 1435,
+      "keptPrevious": true,
+      "seconds": 147
     },
     {
       "store": "compujordan",
       "name": "Compu Jordan",
       "ok": true,
-      "products": 3194,
-      "seconds": 247
+      "products": 3224,
+      "seconds": 224
     },
     {
       "store": "citycenter",
       "name": "City Center Computers",
       "ok": true,
-      "products": 9377,
-      "seconds": 3419
+      "products": 9107,
+      "seconds": 3309
     },
     {
       "store": "orientalstore",
       "name": "Oriental Store",
       "ok": false,
-      "error": "robots.txt disallows crawling",
+      "error": "no products could be read from this store",
       "products": 3683,
       "keptPrevious": true,
-      "seconds": 1
+      "seconds": 22
     },
     {
       "store": "social",
@@ -56,17 +58,17 @@
       "store": "whiteangel",
       "name": "White Angel",
       "ok": false,
-      "error": "HTTP 403 - the store is refusing automated requests",
+      "error": "only 0 products returned, down from 418 - kept the previous catalogue",
       "products": 418,
       "keptPrevious": true,
-      "seconds": 1
+      "seconds": 2
     },
     {
       "store": "numberone",
       "name": "Number One Store",
       "ok": true,
-      "products": 1989,
-      "seconds": 1462
+      "products": 1996,
+      "seconds": 1562
     },
     {
       "store": "midas",
