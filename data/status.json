@@ -1,12 +1,12 @@
 {
-  "builtAt": "2026-11-21T12:29:11.189Z",
+  "builtAt": "2026-11-22T12:53:08.406Z",
   "stores": [
     {
       "store": "igeek",
       "name": "iGeek Megastore",
       "ok": true,
-      "products": 5486,
-      "seconds": 174
+      "products": 5483,
+      "seconds": 182
     },
     {
       "store": "gameon",
@@ -29,14 +29,14 @@
       "name": "Compu Jordan",
       "ok": true,
       "products": 3224,
-      "seconds": 238
+      "seconds": 244
     },
     {
       "store": "citycenter",
       "name": "City Center Computers",
       "ok": true,
-      "products": 9167,
-      "seconds": 3334
+      "products": 9182,
+      "seconds": 3341
     },
     {
       "store": "orientalstore",
@@ -45,7 +45,7 @@
       "error": "no products could be read from this store",
       "products": 3683,
       "keptPrevious": true,
-      "seconds": 24
+      "seconds": 23
     },
     {
       "store": "social",
@@ -67,8 +67,8 @@
       "store": "numberone",
       "name": "Number One Store",
       "ok": true,
-      "products": 1989,
-      "seconds": 1457
+      "products": 2001,
+      "seconds": 1465
     },
     {
       "store": "midas",
